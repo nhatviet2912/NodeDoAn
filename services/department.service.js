@@ -27,8 +27,8 @@ const departmentService = {
 
     createDepartment: async (body) => {
         try{
-            const { Id, DepartmentCode, DepartmentName, Descriptions} = body;
-            const query = `INSERT INTO Departments (Id, DepartmentCode, DepartmentName, Descriptions) VALUES ('${Id}', '${DepartmentCode}', '${DepartmentName}', '${Descriptions}')`;
+            const { DepartmentCode, DepartmentName, Descriptions} = body;
+            const query = `INSERT INTO Departments (DepartmentCode, DepartmentName, Descriptions) VALUES ( '${DepartmentCode}', '${DepartmentName}', '${Descriptions}')`;
             return await (await connection).execute(query);
 
         } catch(error) {

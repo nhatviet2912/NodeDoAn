@@ -54,11 +54,11 @@ const departmentController = {
 
     createdDepartment: async(req, res) => {
         try {
-            const { Id } = req.body;
+            // const { Id } = req.body;
 
-            const isExist = await departmentService.getByIdDepartments(Id);
+            // const isExist = await departmentService.getByIdDepartments(Id);
 
-            if (isExist) return res.status(400).json({message: "DepartmentId đã tồn tại!", error: 1}) 
+            // if (isExist) return res.status(400).json({message: "DepartmentId đã tồn tại!", error: 1}) 
             const data = await departmentService.createDepartment(req.body);
             return res.status(201).json({
                 message: 'success',
