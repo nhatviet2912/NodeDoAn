@@ -1,4 +1,4 @@
-var connection = require('../db.js');
+var connection = require('../../db.js');
 
 
 const departmentService = {
@@ -20,6 +20,19 @@ const departmentService = {
 
             const [rows, fields] = await (await connection).execute(query, values);
             return rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    exitCode: async (departmentCode) => {
+        try{
+            console.log(departmentCode);
+            const query = `SELECT * FROM departments WHERE DepartmentCode = '${departmentCode}'`;
+
+            const [rows, fields] = await (await connection).execute(query);
+            return rows[0];
+
         } catch (error) {
             throw error;
         }
@@ -56,9 +69,44 @@ const departmentService = {
             const query = `DELETE FROM Departments Where Id = '${id}'`;
             return await (await connection).execute(query);
         } catch(error) {
-
+            throw error;
         }
     },
+
+    searchDepartment: async(keyWord) => {
+        try {
+            const query = `SELECT * FROM Departments WHERE DepartmentCode LIKE '%${keyWord}%' OR DepartmentName LIKE '%${keyWord}%'`;
+            const [rows, fields] = await (await connection).execute(query);
+            return rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    importDepartment: async(data) => {  
+        const successData = [];
+        const failureData = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const { DepartmentCode, DepartmentName, Description } = data[i];
+            const query = `INSERT INTO departments (DepartmentCode, DepartmentName, Descriptions) VALUES ('${DepartmentCode}', '${DepartmentName}', '${Description}')`;
+
+            try {
+                const [rows, fields] = await (await connection).execute(query);
+
+                if (rows.affectedRows) {
+                    successData.push(data[i]);
+                } else {
+                    failureData.push(data[i]);
+                }
+            } catch (error) {
+                console.log(error);
+                failureData.push(data[i]);
+            }
+        }
+
+        return { successData, failureData };
+    }
 
 }
 
