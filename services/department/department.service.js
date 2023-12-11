@@ -89,18 +89,26 @@ const departmentService = {
 
         for (let i = 0; i < data.length; i++) {
             const { DepartmentCode, DepartmentName, Description } = data[i];
-            const query = `INSERT INTO departments (DepartmentCode, DepartmentName, Descriptions) VALUES ('${DepartmentCode}', '${DepartmentName}', '${Description}')`;
 
-            try {
-                const [rows, fields] = await (await connection).execute(query);
+            const checkQuery = `SELECT * FROM departments WHERE DepartmentCode = '${DepartmentCode}'`;
+            const [existingRows] = await (await connection).query(checkQuery);
+            if(existingRows.length === 0) {
+                const query = `INSERT INTO departments (DepartmentCode, DepartmentName, Descriptions) VALUES ('${DepartmentCode}', '${DepartmentName}', '${Description}')`;
 
-                if (rows.affectedRows) {
-                    successData.push(data[i]);
-                } else {
+                try {
+                    const [rows, fields] = await (await connection).execute(query);
+
+                    if (rows.affectedRows) {
+                        successData.push(data[i]);
+                    } else {
+                        failureData.push(data[i]);
+                    }
+                } catch (error) {
+                    console.log(error);
                     failureData.push(data[i]);
                 }
-            } catch (error) {
-                console.log(error);
+            }else {
+
                 failureData.push(data[i]);
             }
         }

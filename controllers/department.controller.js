@@ -219,6 +219,24 @@ const departmentController = {
             })
         }
     },
+
+    exportDepartment: async(req, res) => {
+        try {
+            const data = await departmentService.getAllDepartments();
+            const heading = [['ID', 'DepartmentCode', 'DepartmentName', 'Descriptions']];
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.sheet_add_aoa(worksheet, heading);
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'department');
+
+            const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer'});
+            res.attachment('department.xlsx')
+            return res.send(buffer);
+
+        } catch (error) {
+            
+        }
+    },
 };
 
 module.exports = departmentController;

@@ -11,5 +11,6 @@ router.put('/update/:id', departmentController.updateDepartment);
 router.delete('/delete/:id', departmentController.deleteDepartment);
 router.post('/search', departmentController.searchDepartment);
 router.post('/import', uploadService.fileUploadMiddleware, departmentController.importDepartment);
+router.get('/export', departmentController.exportDepartment);
 
 module.exports = router;
