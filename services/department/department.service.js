@@ -88,12 +88,12 @@ const departmentService = {
         const failureData = [];
 
         for (let i = 0; i < data.length; i++) {
-            const { DepartmentCode, DepartmentName, Description } = data[i];
+            const { Id, DepartmentCode, DepartmentName, Description } = data[i];
 
             const checkQuery = `SELECT * FROM departments WHERE DepartmentCode = '${DepartmentCode}'`;
             const [existingRows] = await (await connection).query(checkQuery);
             if(existingRows.length === 0) {
-                const query = `INSERT INTO departments (DepartmentCode, DepartmentName, Descriptions) VALUES ('${DepartmentCode}', '${DepartmentName}', '${Description}')`;
+                const query = `INSERT INTO departments (Id, DepartmentCode, DepartmentName, Descriptions) VALUES ('${Id}','${DepartmentCode}', '${DepartmentName}', '${Description}')`;
 
                 try {
                     const [rows, fields] = await (await connection).execute(query);
