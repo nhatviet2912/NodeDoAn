@@ -13,6 +13,23 @@ const departmentService = {
 
     },
 
+    getAllPageData: async(pageSize, pageIndex) => {
+        const offset = (pageIndex - 1) * pageSize;
+        const query = `SELECT * FROM departments
+                        ORDER BY departments.Id DESC
+                        LIMIT ${pageSize} OFFSET ${offset}`;
+        const [rows] = await (await connection).query(query);
+
+        return rows;
+    },
+
+    getTotal: async() => {
+        const totalCountQuery = `SELECT COUNT(*) AS totalCount FROM departments`;
+        const [countRows] = await (await connection).query(totalCountQuery);
+        const totalCount = countRows[0].totalCount;
+        return totalCount;
+    },
+
     getByIdDepartments: async (departmentId) => {
         try{
             const query = 'SELECT * FROM departments WHERE Id = ?';

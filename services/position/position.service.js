@@ -14,6 +14,25 @@ const positionService = {
 
     },
 
+    getAllPageData: async(pageSize, pageIndex) => {
+        const offset = (pageIndex - 1) * pageSize;
+        const query = `SELECT p.Id, p.PositionCode, p.PositionName, p.Descriptions, p.Department_id, d.DepartmentName
+                        FROM positions as p
+                        INNER JOIN departments as d ON p.Department_id = d.ID
+                        ORDER BY p.Id DESC
+                        LIMIT ${pageSize} OFFSET ${offset}`;
+        const [rows] = await (await connection).query(query);
+
+        return rows;
+    },
+
+    getTotal: async() => {
+        const totalCountQuery = `SELECT COUNT(*) AS totalCount FROM positions`;
+        const [countRows] = await (await connection).query(totalCountQuery);
+        const totalCount = countRows[0].totalCount;
+        return totalCount;
+    },
+
     getByIdPosition: async (positionId) => {
         try{
             const query = 'SELECT * FROM positions WHERE Id = ?';

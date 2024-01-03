@@ -30,6 +30,45 @@ const departmentController = {
         }
     },
 
+    getAllPageData: async(req, res) => {
+        try {
+            const pageSize = parseInt(req.query.pagesize) || 10;
+            const pageIndex = parseInt(req.query.pageindex) || 1;
+      
+            const data = await departmentService.getAllPageData(pageSize, pageIndex);
+            const total = await departmentService.getTotal();
+      
+            if (data.length > 0) {
+                res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data: {
+                        pageSize,
+                        pageIndex,
+                        data,
+                        total
+                    },
+                });
+            } else {
+                res.status(200).json({
+                    message: 'Danh sách sách rỗng!',
+                    error: 1,
+                    data: {
+                        pageSize,
+                        pageIndex,
+                        data,
+                        total
+                    },
+                });
+            }
+        } catch (error) {
+            res.status(500).json({
+              message: `Có lỗi xảy ra! ${error.message}`,
+              error: 1,
+            });
+        }
+    },
+
     getByIdDepartment: async(req, res) => {
         try {
             const departmentId = req.params.id;

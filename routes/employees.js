@@ -6,6 +6,7 @@ const uploadService = require('../services/uploadfile/uploadfile.service');
 
 router.get('/', employeeController.getAll);
 router.get('/getById/:id', employeeController.getById);
+router.get('/getPageData', employeeController.getAllPageData);
 router.get('/exitcode/:code', employeeController.exitCode);
 router.post('/create', employeeController.create);
 router.put('/update/:id', employeeController.update);

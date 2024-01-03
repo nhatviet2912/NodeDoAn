@@ -13,6 +13,26 @@ const employeeService = {
         }
     },
 
+    getAllPageData: async(pageSize, pageIndex) => {
+        const offset = (pageIndex - 1) * pageSize;
+        const query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
+                        e.Address, e.Position_id, p.PositionName
+                        FROM employees as e inner join positions as p on e.Position_id = p.Id
+                        ORDER BY e.Id DESC
+                        LIMIT ${pageSize} OFFSET ${offset}` ;
+        const [rows] = await (await connection).query(query);
+
+        return rows;
+    },
+
+    getTotal: async() => {
+        const totalCountQuery = `SELECT COUNT(*) AS totalCount FROM employees`;
+        const [countRows] = await (await connection).query(totalCountQuery);
+        const totalCount = countRows[0].totalCount;
+        return totalCount;
+    },
+
+
     getById: async (Id) => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
@@ -56,6 +76,7 @@ const employeeService = {
                                             EmployeeName = '${EmployeeName},
                                             DateOfBirth = '${DateOfBirth}',
                                             Gender = '${Gender}',
+                                            Email = '${Email}',
                                             PhoneNumber = '${PhoneNumber},
                                             Address = '${Address}',
                                             Position_id = '${Position_id}

@@ -11,6 +11,11 @@ var usersRouter = require('./routes/users');
 var departmentRouter = require('./routes/department');
 var positionRouter = require('./routes/positions');
 var employeeRouter = require('./routes/employees');
+var contractRouter = require('./routes/contract');
+var marvelRouter = require('./routes/marvel');
+var marvelDetailRouter = require('./routes/marvelDetail');
+var attendancesRouter = require('./routes/attendances');
+var salaryRouter = require('./routes/salary');
 
 var app = express();
 app.use(cors());
@@ -33,6 +38,11 @@ app.use('/users', usersRouter);
 app.use('/department', departmentRouter);
 app.use('/position', positionRouter);
 app.use('/employees', employeeRouter);
+app.use('/contract', contractRouter);
+app.use('/marvel', marvelRouter);
+app.use('/marvelDetails', marvelDetailRouter);
+app.use('/attendances', attendancesRouter);
+app.use('/salary', salaryRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

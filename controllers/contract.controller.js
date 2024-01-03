@@ -1,13 +1,39 @@
-const req = require('express/lib/request');
-const positionService = require('../services/position/position.service');
+const contractService = require('../services/contract/contract.service');
 const fs = require('fs');
 const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
+const req = require('express/lib/request');
 
-const positionController = {
-    getAllPositions: async(req, res)  => {
+const contractController = {
+
+    // getSalary: async(req, res) => {
+    //     try {
+    //         const { id } = req.params;
+    //         const data = await contractService.getSalary(id);
+    //         if (data) {
+    //             res.status(200).json({
+    //                 message: 'success',
+    //                 error: 0,
+    //                 data
+    //             })
+    //         } else {
+    //             res.status(200).json({
+    //                 message: 'Không tìm thấy hợp đồng!',
+    //                 error: 1,
+    //                 data
+    //             })
+    //         }
+    //     } catch (error) {
+    //         res.status(500).json({
+    //             message: `Có lỗi xảy ra! ${error.message}`,
+    //             error: 1,
+    //         })
+    //     }
+    // },
+
+    getAll: async (req, res) => {
         try {
-            const data = await positionService.getAllPosition();
+            const data = await contractService.getAll();
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -34,8 +60,8 @@ const positionController = {
             const pageSize = parseInt(req.query.pagesize) || 10;
             const pageIndex = parseInt(req.query.pageindex) || 1;
       
-            const data = await positionService.getAllPageData(pageSize, pageIndex);
-            const total = await positionService.getTotal();
+            const data = await contractService.getAllPageData(pageSize, pageIndex);
+            const total = await contractService.getTotal();
       
             if (data.length > 0) {
                 res.status(200).json({
@@ -68,11 +94,10 @@ const positionController = {
         }
     },
 
-    getByIdPosition: async(req, res) => {
+    getById: async (req, res) => {
         try {
-            const positionId = req.params.id;
-            const data = await positionService.getByIdPosition(positionId);
-
+            const { id } = req.params;
+            const data = await contractService.getById(id);
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -81,7 +106,7 @@ const positionController = {
                 })
             } else {
                 res.status(200).json({
-                    message: 'Không tìm thấy tên chức vụ!',
+                    message: 'Không tìm thấy hợp đồng!',
                     error: 1,
                     data
                 })
@@ -96,8 +121,8 @@ const positionController = {
 
     exitCode: async(req, res) => {
         try {
-            const positionCode = req.params.code;
-            const data = await positionService.exitCode(positionCode);
+            const code = req.params.code;
+            const data = await contractService.exitCode(code);
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -106,7 +131,7 @@ const positionController = {
                 })
             } else {
                 res.status(200).json({
-                    message: 'Không tìm thấy tên chức vụ!',
+                    message: 'Không tìm thấy hợp đồng!',
                     error: 1,
                     data
                 })
@@ -119,14 +144,14 @@ const positionController = {
         }
     },
 
-    createdPosition: async(req, res) => {
+    create: async(req, res) => {
         try {
-            const { PositionCode } = req.body;
+            const { ContractCode } = req.body;
 
-            const isExist = await positionService.exitCode(PositionCode);
+            const isExist = await contractService.exitCode(ContractCode);
 
-            if (isExist) return res.status(400).json({message: "PositionCode đã tồn tại!", error: 1}) 
-            const data = await positionService.createPosition(req.body);
+            if (isExist) return res.status(400).json({message: "ContractCode đã tồn tại!", error: 1}) 
+            const data = await contractService.create(req.body);
             return res.status(201).json({
                 message: 'success',
                 error: 0,
@@ -140,13 +165,13 @@ const positionController = {
         }
     },
 
-    updatePosition: async (req, res) => {
+    update: async(req, res) => {
         try {
             const { id } = req.params;
             let data = null;
-            const result = await positionService.getByIdPosition(id);
+            const result = await contractService.getById(id);
             if(result != null) {
-                data = await positionService.updatePosition(result.Id, req.body);
+                data = await contractService.update(result.Id, req.body);
             }
             if (data) {
                 return res.status(200).json({
@@ -156,7 +181,7 @@ const positionController = {
                 })
             } else {
                 return res.status(404).json({
-                    message: `Không tìm thấy chức vụ có id:${id}`,
+                    message: `Không tìm thấy hợp đồng có id:${id}`,
                     error: 1,
                     data
                 })
@@ -168,40 +193,38 @@ const positionController = {
                 error: 1,
             })
         }
-
     },
 
-    deletePosition: async (req, res) => {
-        try{
+    delete: async(req, res) => {
+        try {
             const { id } = req.params;
-            const data = await positionService.deletePosition(id);
-
+            const data = await contractService.delete(id);
             if (data) {
-                res.status(200).json({
+                return res.status(200).json({
                     message: 'success',
                     error: 0,
                     data
                 })
             } else {
-                res.status(200).json({
-                    message: 'Không tìm thấy chức vụ!',
+                return res.status(404).json({
+                    message: `Không tìm thấy hợp đồng có id:${id}`,
                     error: 1,
                     data
                 })
             }
-        } catch(error){
+            
+        } catch (error) {
             res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
             })
         }
-        
     },
-
-    searchPosition: async (req, res) => {
+     
+    search: async(req, res, next) => {
         try{
             const { KeyWord } = req.body;
-            const data = await positionService.searchPosition(KeyWord);
+            const data = await contractService.search(KeyWord);
 
             if (data) {
                 res.status(200).json({
@@ -211,7 +234,7 @@ const positionController = {
                 })
             } else {
                 res.status(200).json({
-                    message: 'Không tìm thấy chức vụ!',
+                    message: 'Không tìm thấy hợp đồng!',
                     error: 1,
                     data
                 })
@@ -224,15 +247,16 @@ const positionController = {
         }
     },
 
-    importposition: async(req, res) => {
+    import: async(req, res) => {
         try {
             const excel = req.files.file;
+            console.log(excel);
             await uploadService.handleFileUpload(req, res, async () => {
                 const workbook = XLSX.readFile(excel.tempFilePath);
                 const sheetName = workbook.SheetNames[0];
                 const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
     
-                const result = await positionService.importPosition(data);
+                const result = await contractService.import(data);
     
                 fs.unlinkSync(excel.tempFilePath);
                 if (result) {
@@ -243,7 +267,7 @@ const positionController = {
                     })
                 } else {
                     res.status(200).json({
-                        message: 'Không tìm thấy chức vụ!',
+                        message: 'Không tìm thấy hợp đồng!',
                         error: 1,
                         data: result
                     })
@@ -257,23 +281,26 @@ const positionController = {
         }
     },
 
-    exportposition: async(req, res) => {
+    export: async(req, res) => {
         try {
-            const data = await positionService.getAllPosition();
-            const heading = [['ID', 'PositionCode', 'PositionName', 'Descriptions', 'Department_id']];
+            const data = await contractService.getAll();
+            const heading = [['ID', 'ContractCode', 'ContractName', 'ContractStartDate', 'ContractEndDate', 'ContractTerm', 'SalaryCoefficient', 'SalaryBasic', 'Contract_Employee_id']];
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(data);
             XLSX.utils.sheet_add_aoa(worksheet, heading);
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'position');
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'contracts');
 
             const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer'});
-            res.attachment('position.xlsx')
+            res.attachment('contract.xlsx')
             return res.send(buffer);
 
         } catch (error) {
-            
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
         }
     },
-};
+}
 
-module.exports = positionController;
+module.exports = contractController;

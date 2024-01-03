@@ -4,6 +4,7 @@ const departmentController = require('../controllers/department.controller');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 
 router.get('/', departmentController.getAllDepartments);
+router.get('/getPageData', departmentController.getAllPageData);
 router.get('/getById/:id', departmentController.getByIdDepartment);
 router.get('/exitcode/:code', departmentController.exitCode);
 router.post('/create', departmentController.createdDepartment);

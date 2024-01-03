@@ -5,6 +5,7 @@ const positionController = require('../controllers/position.controller');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 
 router.get('/', positionController.getAllPositions);
+router.get('/getPageData', positionController.getAllPageData);
 router.get('/getById/:id', positionController.getByIdPosition);
 router.get('/exitcode/:code', positionController.exitCode);
 router.post('/create', positionController.createdPosition);
