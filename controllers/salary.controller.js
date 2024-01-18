@@ -33,6 +33,9 @@ const salaryController = {
 
     create: async(req, res) => {
         try {
+
+            // lương ngày = (lương cơ bản * hệ số luong) / số ngày đi làm trong tháng
+            // lương Net = lương ngày * số ngày đi làm
             const { EmployeeId, AbsentCount, Month, Year } = req.body;
 
             const isExist = await contractService.getSalary(EmployeeId);

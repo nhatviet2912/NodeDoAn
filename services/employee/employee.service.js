@@ -73,13 +73,13 @@ const employeeService = {
         try {
             const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id} = body;
             var query = `UPDATE employees SET EmployeeCode = '${EmployeeCode}', 
-                                            EmployeeName = '${EmployeeName},
+                                            EmployeeName = '${EmployeeName}',
                                             DateOfBirth = '${DateOfBirth}',
                                             Gender = '${Gender}',
                                             Email = '${Email}',
-                                            PhoneNumber = '${PhoneNumber},
+                                            PhoneNumber = '${PhoneNumber}',
                                             Address = '${Address}',
-                                            Position_id = '${Position_id}
+                                            Position_id = '${Position_id}'
                                             Where Id = '${id}'`;
             return await (await connection).query(query);
         } catch (error) {
@@ -115,26 +115,28 @@ const employeeService = {
         }
     },
 
-    import: async(data) => {  
+    import: async (data) => {
         const successData = [];
         const failureData = [];
-
+        const errorMessages = [];
+    
         for (let i = 0; i < data.length; i++) {
-            const { Id,  EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id } = data[i];
-
-            const checkQuery = `SELECT * FROM employees WHERE EmployeeCode = '${EmployeeCode}'`;
+            const { Id, EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id } = data[i];
+    
+            const checkQuery = `SELECT * FROM employees WHERE EmployeeCode = '${EmployeeCode}' and Id = '${Id}'`;
             const [existingRows] = await (await connection).query(checkQuery);
-            if(existingRows.length === 0) {
+    
+            if (existingRows.length === 0) {
                 const formattedDateOfBirth = convertExcelDate(DateOfBirth);
                 console.log(formattedDateOfBirth);
-
+    
                 var query = `INSERT INTO employees (Id, EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id) 
                             values ('${Id}','${EmployeeCode}', '${EmployeeName}', '${formattedDateOfBirth}', '${Gender}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}')`;
-
+    
                 console.log(query);
                 try {
                     const [rows] = await (await connection).execute(query);
-
+    
                     if (rows.affectedRows) {
                         successData.push(data[i]);
                     } else {
@@ -143,14 +145,14 @@ const employeeService = {
                 } catch (error) {
                     console.log(error);
                     failureData.push(data[i]);
+                    errorMessages.push(`Error inserting data with Id ${Id}: ${error.message}`);
                 }
-            }else {
-
+            } else {
                 failureData.push(data[i]);
             }
         }
-
-        return { successData, failureData };
+    
+        return { successData, failureData, errorMessages };
     },
 
 

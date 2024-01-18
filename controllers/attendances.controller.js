@@ -83,7 +83,7 @@ const attendanceController = {
             console.log(req.body);
             const isExist = await attendancesService.exit(req.body);
 
-            if (isExist) return res.status(400).json({message: "Danh sách điểm danh đã tồn tại!", error: 1}) 
+            if (isExist) return res.status(400).json({message: "Đã điểm danh ngày hôm nay rồi! Vui lòng kiểm tra lại.", error: 1}) 
             const data = await attendancesService.create(req.body);
             if (data) {
                 res.status(200).json({

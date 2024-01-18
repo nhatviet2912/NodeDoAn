@@ -140,33 +140,46 @@ const employeeController = {
         }
     },
 
-    update: async(req, res) => {
+    update: async (req, res) => {
         try {
             const { id } = req.params;
-            let data = null;
-            const result = await employeeService.getById(id);
-            if(result != null) {
-                data = await employeeService.update(result.Id, req.body);
-            }
-            if (data) {
-                return res.status(200).json({
-                    message: 'success',
-                    error: 0,
-                    data
-                })
-            } else {
+            const { EmployeeCode } = req.body;
+        
+            // Fetch the existing employee
+            const existingEmployee = await employeeService.getById(id);
+        
+            if (existingEmployee === null) {
                 return res.status(404).json({
                     message: `Không tìm thấy nhân viên có id:${id}`,
                     error: 1,
-                    data
-                })
+                    data: null
+                });
             }
-            
+        
+            // Check if the provided EmployeeCode is different from the existing one
+            if (existingEmployee.EmployeeCode !== EmployeeCode) {
+                // Check if the new EmployeeCode already exists
+                const isExist = await employeeService.exitCode(EmployeeCode);
+        
+                if (isExist) {
+                    return res.status(400).json({ message: "Mã nhân viên đã tồn tại!", error: 1 });
+                }
+            }
+        
+            // Update the employee
+            const updatedEmployee = await employeeService.update(id, req.body);
+        
+            return res.status(200).json({
+                message: 'success',
+                error: 0,
+                data: updatedEmployee
+            });
+        
         } catch (error) {
-            res.status(400).json({
+            return res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
-            })
+            });
         }
     },
 
@@ -259,7 +272,7 @@ const employeeController = {
     export: async(req, res) => {
         try {
             const data = await employeeService.getAll();
-            const heading = [['ID', 'EmployeeCode', 'EmployeeName', 'DateOfBirth', 'Gender', 'Email', 'PhoneNumber', 'Address', 'Position_id']];
+            const heading = [['Id', 'EmployeeCode', 'EmployeeName', 'DateOfBirth', 'Gender', 'Email', 'PhoneNumber', 'Address', 'Position_id']];
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(data);
             XLSX.utils.sheet_add_aoa(worksheet, heading);
