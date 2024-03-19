@@ -4,7 +4,7 @@ var connection = require('../../db.js');
 const departmentService = {
     getAllDepartments: async () => {
         try {
-            var query = 'SELECT * FROM departments';
+            var query = 'SELECT * FROM departments order by Id desc';
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {

@@ -126,7 +126,7 @@ const departmentController = {
 
             const isExist = await departmentService.exitCode(DepartmentCode);
 
-            if (isExist) return res.status(400).json({message: "DepartmentCode đã tồn tại!", error: 1}) 
+            if (isExist) return res.status(400).json({message: "Mã phòng ban đã tồn tại!", error: 1}) 
             const data = await departmentService.createDepartment(req.body);
             return res.status(201).json({
                 message: 'success',
