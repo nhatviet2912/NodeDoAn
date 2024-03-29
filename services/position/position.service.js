@@ -5,7 +5,8 @@ const positionService = {
         try {
             var query = `SELECT p.Id, p.PositionCode, p.PositionName, p.Descriptions, p.Department_id, d.DepartmentName
                         FROM positions as p
-                        INNER JOIN departments as d ON p.Department_id = d.ID`;
+                        INNER JOIN departments as d ON p.Department_id = d.ID
+                        ORDER BY p.ID desc`;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -97,6 +98,7 @@ const positionService = {
     },
 
     searchPosition: async(keyWord) => {
+        console.log(keyWord);
         try {
             const query = `SELECT p.Id, p.PositionCode, p.PositionName, p.Descriptions, p.Department_id, d.DepartmentName
                             FROM positions as p

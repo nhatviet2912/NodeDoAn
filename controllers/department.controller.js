@@ -8,7 +8,6 @@ const departmentController = {
     getAllDepartments: async(req, res)  => {
         try {
             const data = await departmentService.getAllDepartments();
-            console.log(data);
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -128,7 +127,7 @@ const departmentController = {
 
             if (isExist) return res.status(400).json({message: "Mã phòng ban đã tồn tại!", error: 1}) 
             const data = await departmentService.createDepartment(req.body);
-            return res.status(201).json({
+            return res.status(200).json({
                 message: 'success',
                 error: 0,
                 data
@@ -146,6 +145,11 @@ const departmentController = {
             const { id } = req.params;
             let data = null;
             const result = await departmentService.getByIdDepartments(id);
+            if(result.DepartmentCode != req.body.DepartmentCode){
+                const isExist = await departmentService.exitCode(req.body.DepartmentCode);
+    
+                if (isExist) return res.status(400).json({message: "Mã phòng ban đã tồn tại!", error: 1}) 
+            }
          
             if(result != null) {
                 data = await departmentService.updateDeparment(result.Id, req.body);
@@ -202,8 +206,8 @@ const departmentController = {
 
     searchDepartment: async (req, res) => {
         try{
-            const { KeyWord } = req.body;
-            const data = await departmentService.searchDepartment(KeyWord);
+            const { value }= req.body;
+            const data = await departmentService.searchDepartment(value);
 
             if (data) {
                 res.status(200).json({

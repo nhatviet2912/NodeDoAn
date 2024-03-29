@@ -122,10 +122,11 @@ const positionController = {
     createdPosition: async(req, res) => {
         try {
             const { PositionCode } = req.body;
+            console.log(req.body);
 
             const isExist = await positionService.exitCode(PositionCode);
 
-            if (isExist) return res.status(400).json({message: "PositionCode đã tồn tại!", error: 1}) 
+            if (isExist) return res.status(400).json({message: "Mã chức vụ đã tồn tại!", error: 1}) 
             const data = await positionService.createPosition(req.body);
             return res.status(201).json({
                 message: 'success',
@@ -145,6 +146,11 @@ const positionController = {
             const { id } = req.params;
             let data = null;
             const result = await positionService.getByIdPosition(id);
+            if(result.PositionCode != req.body.PositionCode){
+                const isExist = await positionService.exitCode(req.body.PositionCode);
+    
+                if (isExist) return res.status(400).json({message: "Mã chức vụ đã tồn tại!", error: 1}) 
+            }
             if(result != null) {
                 data = await positionService.updatePosition(result.Id, req.body);
             }
@@ -200,8 +206,8 @@ const positionController = {
 
     searchPosition: async (req, res) => {
         try{
-            const { KeyWord } = req.body;
-            const data = await positionService.searchPosition(KeyWord);
+            const { value } = req.body;
+            const data = await positionService.searchPosition(value);
 
             if (data) {
                 res.status(200).json({
