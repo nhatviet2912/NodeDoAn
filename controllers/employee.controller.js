@@ -234,6 +234,32 @@ const employeeController = {
             })
         }
     },
+
+    deleteMany: async(req, res) => {
+        try {
+            const { ids } = req.body;
+            const data = await employeeService.deleteMany(req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Không tìm thấy nhân viên có id:${id}`,
+                    error: 1,
+                    data
+                })
+            }
+            
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
      
     search: async(req, res) => {
         try{

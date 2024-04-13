@@ -121,6 +121,15 @@ const employeeService = {
         }
     },
 
+    deleteMany: async (ids) => {
+        try {
+            var query = `DELETE FROM employees WHERE Id IN (${ids.map(id => `'${id}'`).join(',')})`;
+            return await (await connection).query(query);
+        } catch (error) {
+            throw error;
+        }
+    },
+
     search: async(value) => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
