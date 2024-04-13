@@ -14,5 +14,6 @@ router.delete('/delete/:id', employeeController.delete);
 router.post('/search', employeeController.search);
 router.post('/import', uploadService.fileUploadMiddleware, employeeController.import);
 router.get('/export', employeeController.export);
+router.get('/status/:status', employeeController.getStatus);
 
 module.exports = router;

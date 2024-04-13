@@ -4,11 +4,37 @@ const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 const req = require('express/lib/request');
 const { log } = require('console');
+const { formatDate } = require('../utils/helper.js');
 
 const employeeController = {
     getAll: async (req, res) => {
         try {
             const data = await employeeService.getAll();
+            if (data) {
+                res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                res.status(200).json({
+                    message: 'Danh sách sách rỗng!',
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    getStatus: async (req, res) => {
+        try {
+            const { status } = req.params;
+            const data = await employeeService.getStatus(status);
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -73,6 +99,9 @@ const employeeController = {
         try {
             const { id } = req.params;
             const data = await employeeService.getById(id);
+            data.Gender = data.Gender == 0 ? 'Nữ' : 'Nam';
+            var date = formatDate(data.DateOfBirth);
+            data.DateOfBirth = `${date}`;
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -125,7 +154,7 @@ const employeeController = {
 
             const isExist = await employeeService.exitCode(EmployeeCode);
 
-            if (isExist) return res.status(400).json({message: "EmployeeCode đã tồn tại!", error: 1}) 
+            if (isExist) return res.status(400).json({message: "Mã nhân viên đã tồn tại!", error: 1}) 
             const data = await employeeService.create(req.body);
             return res.status(201).json({
                 message: 'success',
@@ -156,9 +185,7 @@ const employeeController = {
                 });
             }
         
-            // Check if the provided EmployeeCode is different from the existing one
             if (existingEmployee.EmployeeCode !== EmployeeCode) {
-                // Check if the new EmployeeCode already exists
                 const isExist = await employeeService.exitCode(EmployeeCode);
         
                 if (isExist) {
@@ -166,7 +193,6 @@ const employeeController = {
                 }
             }
         
-            // Update the employee
             const updatedEmployee = await employeeService.update(id, req.body);
         
             return res.status(200).json({
@@ -209,10 +235,11 @@ const employeeController = {
         }
     },
      
-    search: async(req, res, next) => {
+    search: async(req, res) => {
         try{
-            const { KeyWord } = req.body;
-            const data = await employeeService.search(KeyWord);
+            const { value } = req.body;
+            console.log(value);
+            const data = await employeeService.search(value);
 
             if (data) {
                 res.status(200).json({
@@ -272,18 +299,27 @@ const employeeController = {
     export: async(req, res) => {
         try {
             const data = await employeeService.getAll();
-            const heading = [['Id', 'EmployeeCode', 'EmployeeName', 'DateOfBirth', 'Gender', 'Email', 'PhoneNumber', 'Address', 'Position_id']];
+            if (!data) {
+                return res.status(404).send('Employee data not found');
+            }
+
+            const formatDataExport = data.map((row) => {
+                const { Id, Position_id, ...filteredRow } = row;
+                return filteredRow;
+            });
+
+            const heading = [['Mã Nhân Viên', 'Tên Nhân Viên', 'Ngày Sinh', 'Giới tính', 'Email', 'Số Điện Thoại', 'Địa Chỉ', 'Chức vụ']];
             const workbook = XLSX.utils.book_new();
-            const worksheet = XLSX.utils.json_to_sheet(data);
+            const worksheet = XLSX.utils.json_to_sheet(formatDataExport);
             XLSX.utils.sheet_add_aoa(worksheet, heading);
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'employee');
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
             const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer'});
-            res.attachment('employee.xlsx')
+            res.attachment('DanhSachNhanVien.xlsx')
             return res.send(buffer);
 
         } catch (error) {
-            
+            return res.status(500).json({message: "Xuất File không thành công!", error: 1});
         }
     },
 };

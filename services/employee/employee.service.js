@@ -4,8 +4,22 @@ const employeeService = {
     getAll: async () => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName
-                        FROM employees as e inner join positions as p on e.Position_id = p.Id`;
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag
+                        FROM employees as e inner join positions as p on e.Position_id = p.Id
+                        Order by e.Id desc`;
+            const [rows, fields] = await (await connection).query(query);
+            return rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    getStatus: async (Status) => {
+        try {
+            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag
+                        FROM employees as e inner join positions as p on e.Position_id = p.Id
+                        Where Delete_Flag = ${Status}`;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -59,9 +73,16 @@ const employeeService = {
 
     create: async (body) => {
         try {
-            const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id} = body;
-            var query = `INSERT INTO employees (EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id)
-                        VALUES ('${EmployeeCode}', '${EmployeeName}', '${DateOfBirth}', '${Gender}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}')`;
+            const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, 
+                PhoneNumber, Address, Position_id} = body;
+            
+            const dateOfBirthValue = DateOfBirth != null ? `'${DateOfBirth}'` : null;
+            const genderValue = Gender === 'Nam' ? 1 : 0;
+            var query = `INSERT INTO employees (EmployeeCode, EmployeeName, 
+                        DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id, Delete_Flag)
+                        VALUES ('${EmployeeCode}', '${EmployeeName}', 
+                        ${dateOfBirthValue}, 
+                        '${genderValue}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}', '0')`;
             console.log(query);
             return await (await connection).query(query);
         } catch (error) {
@@ -72,10 +93,14 @@ const employeeService = {
     update: async(id, body) => {
         try {
             const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id} = body;
+            const genderValue = Gender === 'Nam' ? 1 : 0;
+            const dateOfBirthValue = DateOfBirth != null ? `'${DateOfBirth}'` : null;
+
+
             var query = `UPDATE employees SET EmployeeCode = '${EmployeeCode}', 
                                             EmployeeName = '${EmployeeName}',
-                                            DateOfBirth = '${DateOfBirth}',
-                                            Gender = '${Gender}',
+                                            DateOfBirth = ${dateOfBirthValue},
+                                            Gender = '${genderValue}',
                                             Email = '${Email}',
                                             PhoneNumber = '${PhoneNumber}',
                                             Address = '${Address}',
@@ -89,25 +114,25 @@ const employeeService = {
 
     delete: async(id) => {
         try {
-            var query = `Delete from employees where Id = ${id}`;
+            var query = `Update employees SET Delete_Flag = '1' Where Id = '${id}'`;
             return await (await connection).query(query);
         } catch (error) {
             throw error;
         }
     },
 
-    search: async(keyword) => {
+    search: async(value) => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
                         e.Address, e.Position_id, p.PositionName
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
-                        Where e.EmployeeCode LIKE '%${keyword}%' OR
-                            e.EmployeeName LIKE '%${keyword}%' OR
-                            e.DateOfBirth LIKE '%${keyword}%' OR
-                            e.Gender LIKE '%${keyword}%' OR
-                            e.PhoneNumber LIKE '%${keyword}%'OR
-                            e.Address LIKE '%${keyword}%' OR
-                            p.PositionName LIKE '%${keyword}%'`;
+                        Where e.EmployeeCode LIKE '%${value}%' OR
+                            e.EmployeeName LIKE '%${value}%' OR
+                            e.DateOfBirth LIKE '%${value}%' OR
+                            e.Gender LIKE '%${value}%' OR
+                            e.PhoneNumber LIKE '%${value}%'OR
+                            e.Address LIKE '%${value}%' OR
+                            p.PositionName LIKE '%${value}%' and Delete_Flag = '0`;
             const [rows] =  await (await connection).query(query);
             return rows;
         } catch (error) {
