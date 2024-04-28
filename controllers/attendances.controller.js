@@ -1,12 +1,56 @@
-const req = require('express/lib/request');
 const attendancesService = require('../services/attendances/attendances.service');
+const employeeService = require('../services/employee/employee.service');
+
+const fs = require('fs');
+const XLSX = require('xlsx');
+const uploadService = require('../services/uploadfile/uploadfile.service');
+const req = require('express/lib/request');
+const moment = require('moment');
+// const req = require('express/lib/request');
+const { log } = require('console');
 
 
 const attendanceController = {
     getAll: async(req, res)  => {
         try {
-            const data = await attendancesService.getAll();
-            console.log(data);
+            const currentWeekRange = getCurrentWeekRange();
+            const rows = await attendancesService.getAll(currentWeekRange);
+            console.log(rows);
+            const employees = {};
+            rows.forEach(item => {
+                const {
+                    Attendances,
+                    Day,
+                    Month,
+                    Year,
+                    Status,
+                    EmployeeName,
+                    EmployeeCode,
+                    PositionName,
+                    DepartmentName
+                } = item;
+            
+                if (!employees[EmployeeCode]) {
+                    employees[EmployeeCode] = {
+                        EmployeeName,
+                        EmployeeCode,
+                        PositionName,
+                        DepartmentName,
+                        attendances: []
+                    };
+                }
+            
+                employees[EmployeeCode].attendances.push({
+                    Attendances,
+                    Day,
+                    Month,
+                    Year,
+                    Status
+                });
+              });
+            
+            const data = Object.values(employees);
+
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -56,11 +100,37 @@ const attendanceController = {
     getWithMonth: async(req,res) => {
         try {
             const data = await attendancesService.getWithMonth(req.body);
+            let processedData = {};
+
+            data.forEach(item => {
+                if (!processedData[item.EmployeeCode]) {
+                    processedData[item.EmployeeCode] = {
+                        EmployeeName: item.EmployeeName,
+                        EmployeeCode: item.EmployeeCode,
+                        PositionName: item.PositionName,
+                        DepartmentName: item.DepartmentName,
+                        attendances: []
+                    };
+                }
+            
+                let attendanceInfo = {
+                    Attendances: item.Attendances,
+                    Day: item.Day,
+                    Month: item.Month,
+                    Year: item.Year,
+                    Status: item.Status
+                };
+            
+                processedData[item.EmployeeCode].attendances.push(attendanceInfo);
+            });
+            
+            processedData = Object.values(processedData);
+            
             if (data) {
                 res.status(200).json({
                     message: 'success',
                     error: 0,
-                    data
+                    data: processedData
                 })
             } else {
                 res.status(200).json({
@@ -77,61 +147,116 @@ const attendanceController = {
         }
     },
 
-    create: async(req, res) => {
+
+    import: async(req, res) => {
         try {
-            const { Absent, EmployeeId} = req.body;
-            console.log(req.body);
-            const isExist = await attendancesService.exit(req.body);
-
-            if (isExist) return res.status(400).json({message: "Đã điểm danh ngày hôm nay rồi! Vui lòng kiểm tra lại.", error: 1}) 
-            const data = await attendancesService.create(req.body);
-            if (data) {
-                res.status(200).json({
-                    message: 'success',
-                    error: 0,
-                    data
-                })
-            } else {
-                res.status(200).json({
-                    message: 'Danh sách sách rỗng!',
-                    error: 1,
-                    data
-                })
-            }
+            const excel = req.files.file;
+            await uploadService.handleFileUpload(req, res, async () => {
+                const workbook = XLSX.readFile(excel.tempFilePath);
+                const sheetName = workbook.SheetNames[0];
+                const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    
+                const result = await attendancesService.import(data);
+    
+                fs.unlinkSync(excel.tempFilePath);
+                if (result.error === 0) {
+                    res.status(200).json({
+                        message: 'Thành công',
+                        error: 0,
+                        data: result
+                    })
+                } else {
+                    res.status(400).json({
+                        message: result.message,
+                        error: result.error,
+                        data: null
+                    })
+                }
+            });
         } catch (error) {
-            res.status(500).json({
+            res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
             })
         }
     },
 
-    update: async(req, res) => {
-        try{
-            const { Absent} = req.body;
-            const { Id } = req.params;
-            const data = await attendancesService.update(Id , Absent);
-            console.log(data);
-            if (data) {
-                res.status(200).json({
-                    message: 'success',
-                    error: 0,
-                    data
-                })
-            } else {
-                res.status(200).json({
-                    message: 'Danh sách sách rỗng!',
-                    error: 1,
-                    data
-                })
-            }
+    export: async (req, res) => {
+        try {
+            const { Year, Month, Day, DepartmentId } = req.params;
+
+            const week = getWeekDays(Year, Month, Day);
+
+            const data = await employeeService.getEmployeeDeparment(0,DepartmentId);
+
+            const heading = [week];
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.sheet_add_aoa(worksheet, heading);
+
+            // Đặt độ rộng cho mỗi cột
+            const columnWidths = week.map((day, index) => ({
+                wch: index === 2 ? 25 : 15
+            }));
+            worksheet['!cols'] = columnWidths;
+
+            
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+            const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+            res.attachment('ChamCongTemplate.xlsx');
+            return res.send(buffer);
+
         } catch (error) {
-            res.status(500).json({
-                message: `Có lỗi xảy ra! ${error.message}`,
-                error: 1,
-            })
+            return res.status(500).json({message: "Xuất File không thành công!", error: 1});
         }
     },
 }
 
 module.exports = attendanceController;
+
+function getWeekDays(year, month, day) {
+    const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    const startDate = new Date(year, month - 1, day);
+    const ngayThu2Thu6 = ['Mã Nhân Viên', 'Tên Nhân Viên', 'Phòng ban'];
+
+    for (let i = 1; i <= 7; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i - startDate.getDay());
+        const thu = days[date.getDay()];
+        const ngayThang = `${date.getDate()}/${date.getMonth() + 1}`;
+        ngayThu2Thu6.push(`${thu} (${ngayThang})`);
+    }
+
+    return ngayThu2Thu6;
+}
+
+function getCurrentWeekRange() {
+    const currentDate = new Date();
+
+    // Tìm ngày đầu tiên của tuần (thứ 2)
+    const firstDayOfWeek = new Date(currentDate);
+    firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+    
+    // Tìm ngày cuối cùng của tuần (Chủ nhật)
+    const lastDayOfWeek = new Date(currentDate);
+    lastDayOfWeek.setDate(currentDate.getDate() + (7 - currentDate.getDay()));
+    
+    // Tách ngày, tháng và năm ra từ startDate và endDate
+    const startDay = firstDayOfWeek.getDate();
+    const startMonth = firstDayOfWeek.getMonth() + 1;
+    const startYear = firstDayOfWeek.getFullYear();
+    
+    const endDay = lastDayOfWeek.getDate();
+    const endMonth = lastDayOfWeek.getMonth() + 1;
+    const endYear = lastDayOfWeek.getFullYear();
+
+    return {
+        startDay,
+        startMonth,
+        startYear,
+        endDay,
+        endMonth,
+        endYear
+    };
+}

@@ -123,9 +123,19 @@ const employeeService = {
 
     deleteMany: async (ids) => {
         try {
-            var query = `DELETE FROM employees WHERE Id IN (${ids.map(id => `'${id}'`).join(',')})`;
+            var query = `Update employees SET Delete_Flag = '1' WHERE Id IN (${ids.map(id => `'${id}'`).join(',')})`;
             return await (await connection).query(query);
         } catch (error) {
+            throw error;
+        }
+    },
+
+    checkStatus: async (ids) => {
+        try{
+            var query = `SELECT COUNT(*) AS count FROM employees WHERE Delete_Flag = 1 AND Id IN (${ids.map(id => `'${id}'`).join(',')})`;
+            return await (await connection).query(query);
+        }
+        catch (error) {
             throw error;
         }
     },
@@ -162,12 +172,10 @@ const employeeService = {
     
             if (existingRows.length === 0) {
                 const formattedDateOfBirth = convertExcelDate(DateOfBirth);
-                console.log(formattedDateOfBirth);
     
                 var query = `INSERT INTO employees (Id, EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id) 
                             values ('${Id}','${EmployeeCode}', '${EmployeeName}', '${formattedDateOfBirth}', '${Gender}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}')`;
     
-                console.log(query);
                 try {
                     const [rows] = await (await connection).execute(query);
     
@@ -177,7 +185,6 @@ const employeeService = {
                         failureData.push(data[i]);
                     }
                 } catch (error) {
-                    console.log(error);
                     failureData.push(data[i]);
                     errorMessages.push(`Error inserting data with Id ${Id}: ${error.message}`);
                 }
@@ -189,7 +196,22 @@ const employeeService = {
         return { successData, failureData, errorMessages };
     },
 
-
+    getEmployeeDeparment: async (data, DepartmentId) => {
+        try{
+            var query = `SELECT e.EmployeeCode, e.EmployeeName, d.DepartmentName
+                        From employees as e
+                        inner join positions as p on e.Position_id = p.Id
+                        inner join departments as d on p.Department_id = d.Id
+                        Where e.Delete_Flag = ${data} and d.Id = ${DepartmentId}
+                        ORDER BY d.DepartmentName`;
+            console.log(query);
+            const [rows, fields] = await (await connection).query(query);
+            return rows;
+        }
+        catch (error) {
+            throw error;
+        }
+    }
 };
 
 function convertExcelDate(excelDate) {

@@ -10,5 +10,22 @@ function formatDate(data){
 
 }
 
+function formatDateDDMMYYYY(value) {
+    if (value != null) {
+        const date = new Date(value);
 
-module.exports = { formatDate };
+        if (isNaN(date.getTime())) {
+            return '';
+        }
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+
+        return `${day}/${month}/${year}`;
+    }
+    return '';
+}
+
+
+module.exports = { formatDate, formatDateDDMMYYYY };

@@ -1,12 +1,17 @@
 var connection = require('../../db.js');
 
 const attendancesService = {
-    getAll: async () => {
+    getAll: async (currentWeekRange) => {
         try {
-            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.Gender, e.Email, p.PositionName, a.Absent
-                        FROM attendances as a inner join employees as e on a.Att_Employee_id = e.Id
+            var query = `SELECT a.Attendances, a.Day, a.Month, a.Year, a.Status, e.EmployeeName, 
+                        e.EmployeeCode, p.PositionName, d.DepartmentName
+                        FROM attendances as a
+                        inner join employees as e on a.EmployeeId = e.Id
                         inner join positions as p on e.Position_id = p.Id
-                        where p.Id = 17`;
+                        inner join departments as d on p.Department_id = d.Id
+                        WHERE a.Day >= '${currentWeekRange.startDay}' and a.Day <= '${currentWeekRange.endDay}'
+                            and a.Month >= '${currentWeekRange.startMonth}' and a.Month <= '${currentWeekRange.endMonth}'
+                            and a.Year >= '${currentWeekRange.startYear}' and a.Year <= '${currentWeekRange.endYear}'`;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -52,24 +57,14 @@ const attendancesService = {
     getWithMonth: async(body) => {
         try {
             const { Month, Year } = body;
-            var query = `SELECT
-                        e.Id AS EmployeeId,
-                        e.EmployeeCode,
-                        e.EmployeeName,
-                        e.Email,
-                        p.PositionName,
-                        COUNT(CASE WHEN a.Absent = 1 THEN 1 ELSE NULL END) AS AbsentCount
-                    FROM
-                        attendances AS a
-                    INNER JOIN
-                        employees AS e ON a.EmployeeId = e.Id
-                    INNER JOIN
-                        positions AS p ON e.Position_id = p.Id
-                    WHERE
-                        (${Month ? `a.Month = '${Month}'` : '1'}) AND 
-                        (${Year ? `a.Year = '${Year}'` : '1'})
-                    GROUP BY
-                        e.Id, e.EmployeeCode, e.EmployeeName, e.Email, p.PositionName;`
+            var query = `SELECT a.Attendances, a.Day, a.Month, a.Year, a.Status, e.EmployeeName, 
+                        e.EmployeeCode, p.PositionName, d.DepartmentName
+                        FROM attendances as a
+                        inner join employees as e on a.EmployeeId = e.Id
+                        inner join positions as p on e.Position_id = p.Id
+                        inner join departments as d on p.Department_id = d.Id
+                        WHERE a.Month >= '${4}'
+                            and a.Year >= '${2024}'`;
             const [rows] = await (await connection).query(query);
             console.log(rows);
             return rows;
@@ -80,7 +75,6 @@ const attendancesService = {
 
     create: async (body) => {
         try{
-            // console.log(body);
             const { Absent , EmployeeId, Day, Month, Year} = body;
             var query = `INSERT INTO attendances(Day, Absent, EmployeeId, Month, Year) VALUES ('${Day}', '${Absent}', '${EmployeeId}', '${Month}','${Year}')`;
             return await (await connection).execute(query);
@@ -110,7 +104,87 @@ const attendancesService = {
         } catch (error) {
             throw error;
         }
-    }
+    },
+
+    import: async (data) => {
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const insertData = [];
+        const deleteData = [];
+    
+        for (let i = 0; i < data.length; i++) {
+            const workingDays = Object.entries(data[i])
+                .slice(3)
+                .map(([key, value]) => ({ [key]: value }));
+
+            if(workingDays.length === 0){
+                return;
+            }
+        
+            var query = `SELECT e.Id from employees as e where e.EmployeeCode = '${data[i]['Mã Nhân Viên']}'`;
+            const [rows, fields] = await (await connection).query(query);
+            const employeeId = rows[0].Id;
+            let status = 0;
+
+            for(const item of workingDays){
+                const dayName = Object.keys(item)[0];
+                const attendance = item[dayName];
+
+                if (attendance !== 'x' && attendance !== 'o') {
+                    return {
+                        message: 'Vui lòng nhập x hoặc o khi chấm công',
+                        error: 1,
+                    };
+                }
+
+                if (attendance === 'o') {
+                    status = 1;
+                }
+
+                const insideParentheses = dayName.split('(')[1].split(')')[0];
+
+                const [day, month] = insideParentheses.split('/').map(item => parseInt(item.trim()));
+                
+                const checkQuery = `SELECT * FROM attendances 
+                                    WHERE EmployeeId = '${employeeId}' 
+                                    and Day = '${day}'
+                                    and Month = '${month}'
+                                    and Year = '${currentYear}'`;
+                const [existingRows] = await (await connection).query(checkQuery);
+                if(existingRows.length === 0){
+                    insertData.push([employeeId, day, month, currentYear, status]);
+                }
+                else{
+                    existingRows.forEach(row => {
+                        deleteData.push(row.Attendances);
+                    });
+                    insertData.push([employeeId, day, month, currentYear, status]);
+                }
+            }
+
+        }
+        if(deleteData.length > 0){
+            try {
+                const deleteQuery = `DELETE FROM attendances WHERE Attendances IN (?)`;
+                await (await connection).query(deleteQuery, [deleteData]);
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        if(insertData.length > 0){
+            try {
+                const insertQuery = `INSERT INTO attendances (EmployeeId, Day, Month, Year, Status) VALUES ?`;
+                await (await connection).query(insertQuery, [insertData]);
+            } catch (error) {
+                throw error;
+            }
+        }
+        return {
+            message: 'Thành công',
+            error: 0,
+        };
+    },
 }
 
 module.exports = attendancesService;

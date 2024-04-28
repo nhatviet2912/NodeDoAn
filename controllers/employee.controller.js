@@ -4,7 +4,7 @@ const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 const req = require('express/lib/request');
 const { log } = require('console');
-const { formatDate } = require('../utils/helper.js');
+const { formatDate, formatDateDDMMYYYY } = require('../utils/helper.js');
 
 const employeeController = {
     getAll: async (req, res) => {
@@ -109,7 +109,7 @@ const employeeController = {
                     data
                 })
             } else {
-                res.status(200).json({
+                res.status(404).json({
                     message: 'Không tìm thấy nhân viên!',
                     error: 1,
                     data
@@ -134,7 +134,7 @@ const employeeController = {
                     data
                 })
             } else {
-                res.status(200).json({
+                res.status(404).json({
                     message: 'Không tìm thấy nhân viên!',
                     error: 1,
                     data
@@ -212,6 +212,16 @@ const employeeController = {
     delete: async(req, res) => {
         try {
             const { id } = req.params;
+            var array = [];
+            array.push(id);
+            const isCheck = await employeeService.checkStatus(array);
+            if (isCheck[0][0] && isCheck[0][0].count > 0) {
+                return res.status(400).json({
+                    message: `Nhân viên đã bị xóa.`,
+                    error: 1,
+                    data: null
+                })
+            }
             const data = await employeeService.delete(id);
             if (data) {
                 return res.status(200).json({
@@ -237,11 +247,18 @@ const employeeController = {
 
     deleteMany: async(req, res) => {
         try {
-            const { ids } = req.body;
+            const isCheck = await employeeService.checkStatus(req.body);
+            if (isCheck[0][0] && isCheck[0][0].count > 0) {
+                return res.status(400).json({
+                    message: `Đã tồn tại nhân viên bị xóa.`,
+                    error: 1,
+                    data: null
+                })
+            }
             const data = await employeeService.deleteMany(req.body);
             if (data) {
                 return res.status(200).json({
-                    message: 'success',
+                    message: 'Đã xóa nhân viên thành công!',
                     error: 0,
                     data
                 })
@@ -260,7 +277,7 @@ const employeeController = {
             })
         }
     },
-     
+
     search: async(req, res) => {
         try{
             const { value } = req.body;
@@ -330,7 +347,9 @@ const employeeController = {
             }
 
             const formatDataExport = data.map((row) => {
-                const { Id, Position_id, ...filteredRow } = row;
+                const { Id, Position_id, Delete_Flag, ...filteredRow } = row;
+                filteredRow.Gender = filteredRow.Gender === 0 ? "Nữ" : "Nam";
+                filteredRow.DateOfBirth = formatDateDDMMYYYY(filteredRow.DateOfBirth);
                 return filteredRow;
             });
 

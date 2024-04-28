@@ -1,4 +1,5 @@
 const fileUpload = require('express-fileupload');
+const fs = require('fs');
 
 const uploadOptions = {
     useTempFiles: true,
