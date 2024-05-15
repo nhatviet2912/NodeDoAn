@@ -3,7 +3,7 @@ var router = express.Router();
 const contractController = require('../controllers/contract.controller');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 
-
+router.get('/', contractController.getAll);
 router.get('/getById/:id', contractController.getById);
 router.get('/getPageData', contractController.getAllPageData);
 router.get('/exitcode/:code', contractController.exitCode);

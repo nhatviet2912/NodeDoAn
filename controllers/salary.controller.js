@@ -8,7 +8,6 @@ const salaryController = {
 
     get: async(req, res) => {
         try {
-            console.log(req.body);
             const data = await salaryService.get(req.body);
             if (data) {
                 res.status(200).json({
@@ -33,34 +32,81 @@ const salaryController = {
 
     create: async(req, res) => {
         try {
-
             // lương ngày = (lương cơ bản * hệ số luong) / số ngày đi làm trong tháng
             // lương Net = lương ngày * số ngày đi làm
-            const { EmployeeId, AbsentCount, Month, Year } = req.body;
+            const salaryData = [];
+            for (const item of req.body) {
+                const isExist = await contractService.getSalary(item.EmployeeId);
 
-            const isExist = await contractService.getSalary(EmployeeId);
-            
-            const { SalaryBasic, SalaryCoefficient } = isExist;
+                const { SalaryBasic, SalaryCoefficient } = isExist;
 
-            let SalaryDays = AbsentCount !== 0 ? (SalaryBasic * SalaryCoefficient) / AbsentCount : 0;
-            let NetSalary = SalaryDays * AbsentCount;
-
-
-            let body = {
-                EmployeeId,
-                DayWork: AbsentCount,
-                Month,
-                Year,
-                SalaryDay: SalaryDays,
-                NetSalary
+                let SalaryDays = item.WorkDays !== 0 ? (SalaryBasic * SalaryCoefficient) / item.TotalDay : 0;
+                let NetSalary = SalaryDays * item.WorkDays;
+                salaryData.push({
+                    EmployeeId: item.EmployeeId,
+                    DayWork: item.WorkDays,
+                    Month: item.Month,
+                    Year: item.Year,
+                    SalaryDay: SalaryDays,
+                    NetSalary: NetSalary
+                })
             }
 
-            const data = await salaryService.create(body);
+            const data = await salaryService.create(salaryData);
             return res.status(201).json({
                 message: 'success',
                 error: 0,
                 data
             })
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    updateStatus: async(req, res) => {
+        try {
+            const { Id } = req.body;
+            const data = await salaryService.updateStatus(Id);
+            if (data) {
+                res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                res.status(200).json({
+                    message: 'Danh sách sách rỗng!',
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    updateStatusMany: async(req, res) => {
+        try {
+            const data = await salaryService.updateStatusMany(req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'Đã xóa nhân viên thành công!',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Không tìm thấy nhân viên có id:${id}`,
+                    error: 1,
+                    data
+                })
+            }
         } catch (error) {
             res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,

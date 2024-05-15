@@ -15,7 +15,6 @@ const attendanceController = {
         try {
             const currentWeekRange = getCurrentWeekRange();
             const rows = await attendancesService.getAll(currentWeekRange);
-            console.log(rows);
             const employees = {};
             rows.forEach(item => {
                 const {
@@ -99,16 +98,19 @@ const attendanceController = {
 
     getWithMonth: async(req,res) => {
         try {
-            const data = await attendancesService.getWithMonth(req.body);
+            const { Year, Month } = req.body;
+            const data = await attendancesService.getWithMonth(Year, Month);
             let processedData = {};
 
             data.forEach(item => {
                 if (!processedData[item.EmployeeCode]) {
                     processedData[item.EmployeeCode] = {
+                        EmployeeId: item.Id,
                         EmployeeName: item.EmployeeName,
                         EmployeeCode: item.EmployeeCode,
                         PositionName: item.PositionName,
                         DepartmentName: item.DepartmentName,
+                        WorkDays: item.WorkDays,
                         attendances: []
                     };
                 }

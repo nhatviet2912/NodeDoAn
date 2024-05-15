@@ -12,6 +12,7 @@ const attendancesService = {
                         WHERE a.Day >= '${currentWeekRange.startDay}' and a.Day <= '${currentWeekRange.endDay}'
                             and a.Month >= '${currentWeekRange.startMonth}' and a.Month <= '${currentWeekRange.endMonth}'
                             and a.Year >= '${currentWeekRange.startYear}' and a.Year <= '${currentWeekRange.endYear}'`;
+            console.log(query);
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -54,19 +55,19 @@ const attendancesService = {
         }
     },
 
-    getWithMonth: async(body) => {
+    getWithMonth: async(Year, Month) => {
         try {
-            const { Month, Year } = body;
             var query = `SELECT a.Attendances, a.Day, a.Month, a.Year, a.Status, e.EmployeeName, 
-                        e.EmployeeCode, p.PositionName, d.DepartmentName
-                        FROM attendances as a
-                        inner join employees as e on a.EmployeeId = e.Id
-                        inner join positions as p on e.Position_id = p.Id
-                        inner join departments as d on p.Department_id = d.Id
-                        WHERE a.Month >= '${4}'
-                            and a.Year >= '${2024}'`;
+                        e.EmployeeCode, p.PositionName, d.DepartmentName, e.Id,
+                        (SELECT COUNT(*) 
+                        FROM attendances AS a2 
+                        WHERE a2.EmployeeId = e.Id AND a2.Month = a.Month AND a2.Year = a.Year AND a2.Status = '0') AS WorkDays
+                FROM attendances AS a
+                INNER JOIN employees AS e ON a.EmployeeId = e.Id
+                INNER JOIN positions AS p ON e.Position_id = p.Id
+                INNER JOIN departments AS d ON p.Department_id = d.Id
+                WHERE a.Month = '${Month}' AND a.Year = '${Year}'`;
             const [rows] = await (await connection).query(query);
-            console.log(rows);
             return rows;
         } catch (error) {
             throw error;
@@ -117,8 +118,11 @@ const attendancesService = {
                 .slice(3)
                 .map(([key, value]) => ({ [key]: value }));
 
-            if(workingDays.length === 0){
-                return;
+            if (workingDays.length === 0 || workingDays.length > 7) {
+                return {
+                    message: 'Import file không thành công! Vui lòng kiểm tra lại',
+                    error: 1,
+                };
             }
         
             var query = `SELECT e.Id from employees as e where e.EmployeeCode = '${data[i]['Mã Nhân Viên']}'`;

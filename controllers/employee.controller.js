@@ -281,7 +281,6 @@ const employeeController = {
     search: async(req, res) => {
         try{
             const { value } = req.body;
-            console.log(value);
             const data = await employeeService.search(value);
 
             if (data) {

@@ -3,6 +3,7 @@ const fs = require('fs');
 const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 const req = require('express/lib/request');
+const { formatDate } = require('../utils/helper.js');
 
 const contractController = {
 
@@ -98,6 +99,10 @@ const contractController = {
         try {
             const { id } = req.params;
             const data = await contractService.getById(id);
+            var dateStart = formatDate(data.ContractStartDate);
+            var dateEnd = formatDate(data.ContractEndDate);
+            data.ContractStartDate = `${dateStart}`;
+            data.ContractEndDate = `${dateEnd}`;
             if (data) {
                 res.status(200).json({
                     message: 'success',
@@ -221,10 +226,10 @@ const contractController = {
         }
     },
      
-    search: async(req, res, next) => {
+    search: async(req, res) => {
         try{
-            const { KeyWord } = req.body;
-            const data = await contractService.search(KeyWord);
+            const { value } = req.body;
+            const data = await contractService.search(value);
 
             if (data) {
                 res.status(200).json({

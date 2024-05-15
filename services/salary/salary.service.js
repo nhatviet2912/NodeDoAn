@@ -5,8 +5,12 @@ const salaryService = {
     get: async(body) => {
         try {
             const { Month, Year } = body;
-            var query = `SELECT s.Month, s.Year, s.NetSalary, s.DayWork, s.SalaryDay, e.EmployeeName
+            var query = `SELECT s.Id, s.Month, s.Year, s.NetSalary, s.DayWork, s.SalaryDay, e.EmployeeName,
+                        e.EmployeeCode, p.PositionName, d.DepartmentName, a.SalaryBasic, s.Status
                         FROM salary as s inner join employees as e on s.Employee_id = e.Id
+                        inner join positions as p on e.Position_id = p.Id
+                        inner join departments as d on p.Department_id = d.Id
+                        inner join contracts as a on a.Contract_Employee_id = e.Id
                         WHERE s.Month = '${Month}' AND s.Year = '${Year}';`;
             const [rows] = await (await connection).query(query);
             return rows;
@@ -26,12 +30,46 @@ const salaryService = {
         }
     },
 
-    create: async(body) => {
+    create: async(salaryData) => {
         try {
-            const { Month, NetSalary, EmployeeId, Year, DayWork, SalaryDay } = body;
-            const query = `INSERT INTO salary (Month, NetSalary, Employee_id, Year, DayWork, SalaryDay) 
-                            VALUES ('${Month}', '${NetSalary}', '${EmployeeId}', '${Year}', '${DayWork}', '${SalaryDay}');`
-            return await (await connection).execute(query);
+            let listIdDelete = []
+            console.log(salaryData);
+            for (const item of salaryData) {
+                var query = `Select s.Id from salary as s
+                            where s.Employee_id = '${item.EmployeeId}' and s.Month = '${item.Month}' and s.Year = '${item.Year}'`;
+                const [rows, fields] = await (await connection).query(query);
+                rows.forEach(row => {
+                    listIdDelete.push(row.Id);
+                });
+            }
+            if (listIdDelete.length > 0) {
+                var deleteQuery = `DELETE FROM salary as s where s.Id IN (?)`;
+                await (await connection).query(deleteQuery, [listIdDelete]);
+            }
+            const values = salaryData.map(item => [item.EmployeeId, item.DayWork, item.Month, item.Year, item.SalaryDay, item.NetSalary, 0]);
+            const insertQuery = `INSERT INTO salary (Employee_id, DayWork, Month, Year, SalaryDay, NetSalary, Status)
+                    VALUES ?`;
+
+            return await (await connection).query(insertQuery, [values]);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    updateStatus: async (Id) => {
+        try {
+            var query = `Update salary as s set s.Status="1" where s.Id= ${Id}`;
+            return await (await connection).query(query);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    updateStatusMany: async (ids) => {
+        try {
+            var query = `Update salary SET Status = '1' 
+                        WHERE Id IN (${ids.map(id => `'${id}'`).join(',')})`;
+            return await (await connection).query(query);
         } catch (error) {
             throw error;
         }
