@@ -17,6 +17,7 @@ var marvelDetailRouter = require('./routes/marvelDetail');
 var attendancesRouter = require('./routes/attendances');
 var salaryRouter = require('./routes/salary');
 var workRouter = require('./routes/work');
+var benefitRouter = require('./routes/benefit');
 
 var app = express();
 app.use(cors());
@@ -45,6 +46,7 @@ app.use('/marvelDetails', marvelDetailRouter);
 app.use('/attendances', attendancesRouter);
 app.use('/salary', salaryRouter);
 app.use('/work', workRouter);
+app.use('/benefit', benefitRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -56,6 +56,32 @@ const employeeController = {
         }
     },
 
+    updateStatus: async(req, res) => {
+        try {
+            const { id } = req.params;
+            const data = await employeeService.updateStatus(id);
+            if (data) {
+                return res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Không tìm thấy nhân viên có id:${id}`,
+                    error: 1,
+                    data
+                })
+            }
+            
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
     getAllPageData: async(req, res) => {
         try {
             const pageSize = parseInt(req.query.pagesize) || 10;
@@ -212,16 +238,6 @@ const employeeController = {
     delete: async(req, res) => {
         try {
             const { id } = req.params;
-            var array = [];
-            array.push(id);
-            const isCheck = await employeeService.checkStatus(array);
-            if (isCheck[0][0] && isCheck[0][0].count > 0) {
-                return res.status(400).json({
-                    message: `Nhân viên đã bị xóa.`,
-                    error: 1,
-                    data: null
-                })
-            }
             const data = await employeeService.delete(id);
             if (data) {
                 return res.status(200).json({
@@ -247,15 +263,32 @@ const employeeController = {
 
     deleteMany: async(req, res) => {
         try {
-            const isCheck = await employeeService.checkStatus(req.body);
-            if (isCheck[0][0] && isCheck[0][0].count > 0) {
-                return res.status(400).json({
-                    message: `Đã tồn tại nhân viên bị xóa.`,
+            const data = await employeeService.deleteMany(req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'Đã xóa nhân viên thành công!',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Không tìm thấy nhân viên có id:${id}`,
                     error: 1,
-                    data: null
+                    data
                 })
             }
-            const data = await employeeService.deleteMany(req.body);
+            
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    updateStatusMany: async(req, res) => {
+        try {
+            const data = await employeeService.updateStatusMany(req.body);
             if (data) {
                 return res.status(200).json({
                     message: 'Đã xóa nhân viên thành công!',
@@ -347,6 +380,7 @@ const employeeController = {
 
             const formatDataExport = data.map((row) => {
                 const { Id, Position_id, Delete_Flag, ...filteredRow } = row;
+                filteredRow.Status = filteredRow.Status === 0 ? "Đang làm việc" : "Đã nghỉ việc";
                 filteredRow.Gender = filteredRow.Gender === 0 ? "Nữ" : "Nam";
                 filteredRow.DateOfBirth = formatDateDDMMYYYY(filteredRow.DateOfBirth);
                 return filteredRow;

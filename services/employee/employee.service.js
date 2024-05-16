@@ -4,9 +4,10 @@ const employeeService = {
     getAll: async () => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
-                        Order by e.Id desc`;
+                        where e.Delete_Flag = '0'
+                        Order by e.Id desc `;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -17,9 +18,9 @@ const employeeService = {
     getStatus: async (Status) => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
-                        Where Delete_Flag = ${Status}`;
+                        Where Status = ${Status}`;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -79,11 +80,10 @@ const employeeService = {
             const dateOfBirthValue = DateOfBirth != null ? `'${DateOfBirth}'` : null;
             const genderValue = Gender === 'Nam' ? 1 : 0;
             var query = `INSERT INTO employees (EmployeeCode, EmployeeName, 
-                        DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id, Delete_Flag)
+                        DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id, Delete_Flag, Status)
                         VALUES ('${EmployeeCode}', '${EmployeeName}', 
                         ${dateOfBirthValue}, 
-                        '${genderValue}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}', '0')`;
-            console.log(query);
+                        '${genderValue}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}', '0', '0')`;
             return await (await connection).query(query);
         } catch (error) {
             throw error;
@@ -130,12 +130,30 @@ const employeeService = {
         }
     },
 
+    updateStatusMany: async (ids) => {
+        try {
+            var query = `Update employees SET Status = '1' WHERE Id IN (${ids.map(id => `'${id}'`).join(',')})`;
+            return await (await connection).query(query);
+        } catch (error) {
+            throw error;
+        }
+    },
+
     checkStatus: async (ids) => {
         try{
             var query = `SELECT COUNT(*) AS count FROM employees WHERE Delete_Flag = 1 AND Id IN (${ids.map(id => `'${id}'`).join(',')})`;
             return await (await connection).query(query);
         }
         catch (error) {
+            throw error;
+        }
+    },
+
+    updateStatus: async(id) => {
+        try {
+            var query = `Update employees SET Status = '1' Where Id = '${id}'`;
+            return await (await connection).query(query);
+        } catch (error) {
             throw error;
         }
     },
