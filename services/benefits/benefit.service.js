@@ -55,12 +55,14 @@ const benefitService = {
 
     update: async(id, body) => {
         try{
-            const { PositionCode, PositionName, Descriptions, Department_id} = body;
-            const query = `UPDATE positions SET 
-                            PositionCode = '${PositionCode}', 
-                            PositionName = '${PositionName}', 
-                            Descriptions = '${Descriptions}',
-                            Department_id = '${Department_id}'
+            const { BenefitCode, Employee_id, BenefitType, StartDate, EndDate, Description} = body;
+            const query = `UPDATE benefits SET 
+                            BenefitCode = '${BenefitCode}', 
+                            Employee_id = '${Employee_id}', 
+                            BenefitType = '${BenefitType}',
+                            StartDate = '${StartDate}',
+                            EndDate = '${EndDate}',
+                            Description = '${Description}'
                             WHERE Id = '${id}'`;
                             console.log(query);
             return await (await connection).execute(query);
@@ -72,62 +74,12 @@ const benefitService = {
     
     delete: async(id) => {
         try{
-            const query = `DELETE FROM positions Where Id = '${id}'`;
+            const query = `DELETE FROM benefits Where Id = '${id}'`;
             return await (await connection).execute(query);
         } catch(error) {
             throw error;
         }
     },
-
-    searchPosition: async(keyWord) => {
-        console.log(keyWord);
-        try {
-            const query = `SELECT p.Id, p.PositionCode, p.PositionName, p.Descriptions, p.Department_id, d.DepartmentName
-                            FROM positions as p
-                            INNER JOIN departments as d ON p.Department_id = d.ID WHERE 
-                            p.PositionCode LIKE '%${keyWord}%' OR 
-                            p.PositionName LIKE '%${keyWord}%' OR 
-                            d.DepartmentName LIKE '%${keyWord}%'`;
-            const [rows, fields] = await (await connection).execute(query);
-            return rows;
-        } catch (error) {
-            throw error;
-        }
-    },
-
-    importPosition: async(data) => {  
-        const successData = [];
-        const failureData = [];
-
-        for (let i = 0; i < data.length; i++) {
-            const { Id, PositionCode, PositionName, Description, Department_id } = data[i];
-
-            const checkQuery = `SELECT * FROM positions WHERE PositionCode = '${PositionCode}'`;
-            const [existingRows] = await (await connection).query(checkQuery);
-            if(existingRows.length === 0) {
-                const query = `INSERT INTO positions (Id, PositionCode, PositionName, Descriptions, Department_id) VALUES 
-                                ('${Id}', '${PositionCode}', '${PositionName}', '${Description}', '${Department_id}')`;
-
-                try {
-                    const [rows, fields] = await (await connection).execute(query);
-
-                    if (rows.affectedRows) {
-                        successData.push(data[i]);
-                    } else {
-                        failureData.push(data[i]);
-                    }
-                } catch (error) {
-                    console.log(error);
-                    failureData.push(data[i]);
-                }
-            }else {
-
-                failureData.push(data[i]);
-            }
-        }
-
-        return { successData, failureData };
-    }
 }
 
 

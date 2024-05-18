@@ -106,68 +106,60 @@ const benefitController = {
         }
     },
 
-    // updatePosition: async (req, res) => {
-    //     try {
-    //         const { id } = req.params;
-    //         let data = null;
-    //         const result = await positionService.getByIdPosition(id);
-    //         if(result.PositionCode != req.body.PositionCode){
-    //             const isExist = await positionService.exitCode(req.body.PositionCode);
-    
-    //             if (isExist) return res.status(400).json({message: "Mã chức vụ đã tồn tại!", error: 1}) 
-    //         }
-    //         if(result != null) {
-    //             data = await positionService.updatePosition(result.Id, req.body);
-    //         }
-    //         if (data) {
-    //             return res.status(200).json({
-    //                 message: 'success',
-    //                 error: 0,
-    //                 data
-    //             })
-    //         } else {
-    //             return res.status(404).json({
-    //                 message: `Không tìm thấy chức vụ có id:${id}`,
-    //                 error: 1,
-    //                 data
-    //             })
-    //         }
+    update: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            data = await benefitService.update(id, req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Không tìm bảo hiểm có id:${id}`,
+                    error: 1,
+                    data
+                })
+            }
             
-    //     } catch (error) {
-    //         res.status(400).json({
-    //             message: `Có lỗi xảy ra! ${error.message}`,
-    //             error: 1,
-    //         })
-    //     }
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
 
-    // },
+    },
 
-    // deletePosition: async (req, res) => {
-    //     try{
-    //         const { id } = req.params;
-    //         const data = await positionService.deletePosition(id);
+    delete: async (req, res) => {
+        try{
+            const { id } = req.params;
+            const data = await benefitService.delete(id);
 
-    //         if (data) {
-    //             res.status(200).json({
-    //                 message: 'success',
-    //                 error: 0,
-    //                 data
-    //             })
-    //         } else {
-    //             res.status(200).json({
-    //                 message: 'Không tìm thấy chức vụ!',
-    //                 error: 1,
-    //                 data
-    //             })
-    //         }
-    //     } catch(error){
-    //         res.status(400).json({
-    //             message: `Có lỗi xảy ra! ${error.message}`,
-    //             error: 1,
-    //         })
-    //     }
+            if (data) {
+                res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data
+                })
+            } else {
+                res.status(200).json({
+                    message: 'Không tìm thấy chức vụ!',
+                    error: 1,
+                    data
+                })
+            }
+        } catch(error){
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
         
-    // },
+    },
 
     // searchPosition: async (req, res) => {
     //     try{
