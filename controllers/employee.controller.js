@@ -386,11 +386,26 @@ const employeeController = {
                 return filteredRow;
             });
 
-            const heading = [['Mã Nhân Viên', 'Tên Nhân Viên', 'Ngày Sinh', 'Giới tính', 'Email', 'Số Điện Thoại', 'Địa Chỉ', 'Chức vụ']];
+            const heading = [['Mã Nhân Viên', 'Tên Nhân Viên', 'Ngày Sinh', 'Giới tính', 'Email', 'Số Điện Thoại', 'Địa Chỉ', 'Chức vụ', 'Phòng ban ', 'Trạng thái']];
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(formatDataExport);
             XLSX.utils.sheet_add_aoa(worksheet, heading);
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+            const columnWidths = [
+                { wch: 15 },  // Mã Nhân Viên
+                { wch: 20 },  // Tên Nhân Viên
+                { wch: 15 },  // Ngày Sinh
+                { wch: 10 },  // Giới tính
+                { wch: 25 },  // Email
+                { wch: 15 },  // Số Điện Thoại
+                { wch: 30 },  // Địa Chỉ
+                { wch: 20 },  // Chức vụ
+                { wch: 20 },  // Phòng ban
+                { wch: 15 }   // Trạng thái
+            ];
+            
+            worksheet['!cols'] = columnWidths;
 
             const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer'});
             res.attachment('DanhSachNhanVien.xlsx')

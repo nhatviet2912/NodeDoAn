@@ -4,11 +4,13 @@ const employeeService = {
     getAll: async () => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status
-                        FROM employees as e inner join positions as p on e.Position_id = p.Id
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, d.DepartmentName, e.Status
+                        FROM employees as e 
+                        inner join positions as p on e.Position_id = p.Id
+                        inner join departments as d on p.Department_id = d.Id
                         where e.Delete_Flag = '0'
                         Order by e.Id desc `;
-            const [rows, fields] = await (await connection).query(query);
+            const [rows] = await (await connection).query(query);
             return rows;
         } catch (error) {
             throw error;
@@ -21,7 +23,7 @@ const employeeService = {
                         e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
                         Where Status = ${Status}`;
-            const [rows, fields] = await (await connection).query(query);
+            const [rows] = await (await connection).query(query);
             return rows;
         } catch (error) {
             throw error;
@@ -169,7 +171,7 @@ const employeeService = {
                             e.Gender LIKE '%${value}%' OR
                             e.PhoneNumber LIKE '%${value}%'OR
                             e.Address LIKE '%${value}%' OR
-                            p.PositionName LIKE '%${value}%' and Delete_Flag = '0`;
+                            p.PositionName LIKE '%${value}%' and Delete_Flag = '0'`;
             const [rows] =  await (await connection).query(query);
             return rows;
         } catch (error) {

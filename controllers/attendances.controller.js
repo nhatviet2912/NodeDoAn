@@ -51,20 +51,20 @@ const attendanceController = {
             const data = Object.values(employees);
 
             if (data) {
-                res.status(200).json({
+                return res.status(200).json({
                     message: 'success',
                     error: 0,
                     data
                 })
             } else {
-                res.status(200).json({
+                return res.status(200).json({
                     message: 'Danh sách sách rỗng!',
                     error: 1,
                     data
                 })
             }
         } catch (error) {
-            res.status(500).json({
+            return res.status(500).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
             })
@@ -129,13 +129,13 @@ const attendanceController = {
             processedData = Object.values(processedData);
             
             if (data) {
-                res.status(200).json({
+                return res.status(200).json({
                     message: 'success',
                     error: 0,
                     data: processedData
                 })
             } else {
-                res.status(200).json({
+                return res.status(200).json({
                     message: 'Danh sách sách rỗng!',
                     error: 1,
                     data
@@ -157,18 +157,26 @@ const attendanceController = {
                 const workbook = XLSX.readFile(excel.tempFilePath);
                 const sheetName = workbook.SheetNames[0];
                 const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    
+                
+                const duplicateEmployeeIds = findDuplicates(data, 'Mã Nhân Viên');
+                if (duplicateEmployeeIds.length > 0) {
+                    res.status(400).json({
+                        message: "Có lỗi dữ liệu trùng lặp",
+                        error: 1,
+                        data: null
+                    })
+                }
                 const result = await attendancesService.import(data);
     
                 fs.unlinkSync(excel.tempFilePath);
                 if (result.error === 0) {
-                    res.status(200).json({
+                    return res.status(200).json({
                         message: 'Thành công',
                         error: 0,
                         data: result
                     })
                 } else {
-                    res.status(400).json({
+                    return res.status(400).json({
                         message: result.message,
                         error: result.error,
                         data: null
@@ -176,7 +184,7 @@ const attendanceController = {
                 }
             });
         } catch (error) {
-            res.status(400).json({
+            return res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
             })
@@ -262,3 +270,12 @@ function getCurrentWeekRange() {
         endYear
     };
 }
+
+const findDuplicates = (arr, key) => {
+    const counts = arr.reduce((acc, item) => {
+      acc[item[key]] = (acc[item[key]] || 0) + 1;
+      return acc;
+    }, {});
+  
+    return Object.keys(counts).filter((key) => counts[key] > 1);
+};

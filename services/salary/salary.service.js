@@ -33,7 +33,6 @@ const salaryService = {
     create: async(salaryData) => {
         try {
             let listIdDelete = []
-            console.log(salaryData);
             for (const item of salaryData) {
                 var query = `Select s.Id from salary as s
                             where s.Employee_id = '${item.EmployeeId}' and s.Month = '${item.Month}' and s.Year = '${item.Year}'`;

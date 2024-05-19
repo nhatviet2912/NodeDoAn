@@ -3,6 +3,7 @@ const contractService = require('../services/contract/contract.service');
 const fs = require('fs');
 const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
+const benefitService = require('../services/benefits/benefit.service');
 
 const salaryController = {
 
@@ -33,15 +34,21 @@ const salaryController = {
     create: async(req, res) => {
         try {
             // lương ngày = (lương cơ bản * hệ số luong) / số ngày đi làm trong tháng
-            // lương Net = lương ngày * số ngày đi làm
+            // lương thực lãnh = lương ngày * số ngày đi làm - Tiền bảo hiểm
             const salaryData = [];
             for (const item of req.body) {
                 const isExist = await contractService.getSalary(item.EmployeeId);
+                const AmountEmployee = await benefitService.getAmountPay(item.EmployeeId);
 
                 const { SalaryBasic, SalaryCoefficient } = isExist;
+                const { Amount } = AmountEmployee;
+                let partAmount = parseInt(Amount.toFixed(0));
+                console.log(partAmount);
 
                 let SalaryDays = item.WorkDays !== 0 ? (SalaryBasic * SalaryCoefficient) / item.TotalDay : 0;
-                let NetSalary = SalaryDays * item.WorkDays;
+                console.log(SalaryDays);
+                let NetSalary = parseInt(Amount.toFixed(0)) * item.WorkDays - (partAmount == null ? 0 : partAmount);
+                console.log(NetSalary);
                 salaryData.push({
                     EmployeeId: item.EmployeeId,
                     DayWork: item.WorkDays,
@@ -52,7 +59,7 @@ const salaryController = {
                 })
             }
 
-            const data = await salaryService.create(salaryData);
+            // const data = await salaryService.create(salaryData);
             return res.status(201).json({
                 message: 'success',
                 error: 0,
