@@ -40,15 +40,12 @@ const salaryController = {
                 const isExist = await contractService.getSalary(item.EmployeeId);
                 const AmountEmployee = await benefitService.getAmountPay(item.EmployeeId);
 
-                const { SalaryBasic, SalaryCoefficient } = isExist;
-                const { Amount } = AmountEmployee;
+                const Amount = AmountEmployee?.Amount ?? 0;
                 let partAmount = parseInt(Amount.toFixed(0));
-                console.log(partAmount);
+                const { SalaryBasic, SalaryCoefficient } = isExist;
 
                 let SalaryDays = item.WorkDays !== 0 ? (SalaryBasic * SalaryCoefficient) / item.TotalDay : 0;
-                console.log(SalaryDays);
-                let NetSalary = parseInt(Amount.toFixed(0)) * item.WorkDays - (partAmount == null ? 0 : partAmount);
-                console.log(NetSalary);
+                let NetSalary = SalaryDays * item.WorkDays - (partAmount == null ? 0 : partAmount);
                 salaryData.push({
                     EmployeeId: item.EmployeeId,
                     DayWork: item.WorkDays,
@@ -58,8 +55,7 @@ const salaryController = {
                     NetSalary: NetSalary
                 })
             }
-
-            // const data = await salaryService.create(salaryData);
+            const data = await salaryService.create(salaryData);
             return res.status(201).json({
                 message: 'success',
                 error: 0,

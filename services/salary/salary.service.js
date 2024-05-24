@@ -6,11 +6,13 @@ const salaryService = {
         try {
             const { Month, Year } = body;
             var query = `SELECT s.Id, s.Month, s.Year, s.NetSalary, s.DayWork, s.SalaryDay, e.EmployeeName,
-                        e.EmployeeCode, p.PositionName, d.DepartmentName, a.SalaryBasic, s.Status
+                        e.EmployeeCode, p.PositionName, d.DepartmentName, c.SalaryBasic, s.Status,
+                        (c.SalaryBasic * b.Percent / 100) as Amount
                         FROM salary as s inner join employees as e on s.Employee_id = e.Id
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id
-                        inner join contracts as a on a.Contract_Employee_id = e.Id
+                        inner join contracts as c on c.Contract_Employee_id = e.Id
+                        inner join benefits as b on b.Employee_id = e.Id
                         WHERE s.Month = '${Month}' AND s.Year = '${Year}';`;
             const [rows] = await (await connection).query(query);
             return rows;
