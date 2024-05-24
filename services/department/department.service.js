@@ -58,7 +58,7 @@ const departmentService = {
     createDepartment: async (body) => {
         try{
             const { DepartmentCode, DepartmentName, Descriptions} = body;
-            const query = `INSERT INTO Departments (DepartmentCode, DepartmentName, Descriptions) VALUES ( '${DepartmentCode}', '${DepartmentName}', '${Descriptions}')`;
+            const query = `INSERT INTO departments (DepartmentCode, DepartmentName, Descriptions) VALUES ( '${DepartmentCode}', '${DepartmentName}', '${Descriptions}')`;
             return await (await connection).execute(query);
 
         } catch(error) {
@@ -69,7 +69,7 @@ const departmentService = {
     updateDeparment: async(id, body) => {
         try{
             const { DepartmentCode, DepartmentName, Descriptions} = body;
-            const query = `UPDATE Departments SET 
+            const query = `UPDATE departments SET 
                             DepartmentCode = '${DepartmentCode}', 
                             DepartmentName = '${DepartmentName}', 
                             Descriptions = '${Descriptions}' 
@@ -83,7 +83,7 @@ const departmentService = {
     
     deleteDeparment: async(id) => {
         try{
-            const query = `DELETE FROM Departments Where Id = '${id}'`;
+            const query = `DELETE FROM departments Where Id = '${id}'`;
             return await (await connection).execute(query);
         } catch(error) {
             throw error;
@@ -92,7 +92,7 @@ const departmentService = {
 
     searchDepartment: async(keyWord) => {
         try {
-            const query = `SELECT * FROM Departments WHERE DepartmentCode LIKE '%${keyWord}%' OR DepartmentName LIKE '%${keyWord}%'`;
+            const query = `SELECT * FROM departments WHERE DepartmentCode LIKE '%${keyWord}%' OR DepartmentName LIKE '%${keyWord}%'`;
             const [rows, fields] = await (await connection).execute(query);
             return rows;
         } catch (error) {
