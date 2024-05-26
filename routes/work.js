@@ -8,6 +8,8 @@ router.get('/exitcode/:code', workController.exitCode);
 router.post('/create', workController.create);
 router.put('/update/:id', workController.update);
 router.delete('/delete/:id', workController.delete);
+router.put('/check/:id/:status', workController.check);
+router.get('/getDetail/:id', workController.getDetail);
 
 
 module.exports = router;

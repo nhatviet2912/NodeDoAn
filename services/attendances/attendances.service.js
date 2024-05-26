@@ -128,9 +128,9 @@ const attendancesService = {
             var query = `SELECT e.Id from employees as e where e.EmployeeCode = '${data[i]['Mã Nhân Viên']}'`;
             const [rows, fields] = await (await connection).query(query);
             const employeeId = rows[0].Id;
-            let status = 0;
-
+            
             for(const item of workingDays){
+                let status = 0;
                 const dayName = Object.keys(item)[0];
                 const attendance = item[dayName];
 

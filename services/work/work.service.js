@@ -1,3 +1,4 @@
+const { lightFormat } = require('date-fns/fp/lightFormat');
 var connection = require('../../db.js');
 
 const workService = {
@@ -14,7 +15,23 @@ const workService = {
         } catch (error) {
             throw error;
         }
+    },
 
+    getDetail: async (Id) => {
+        try {
+            var query = `SELECT w.Id, w.WorkCode, w.StartDate, w.StartEnd, w.Reason, w.Status, w.Address,
+                        e.EmployeeCode, e.EmployeeName, p.PositionName
+                        FROM work as w inner join employees as e
+                        on w.Work_Employee = e.Id
+                        inner join positions as p on e.Position_id = p.Id
+                        where w.Work_Employee = '${Id}'
+                        order by Id desc`;
+                        console.log(query);
+            const [rows, fields] = await (await connection).query(query);
+            return rows;
+        } catch (error) {
+            throw error;
+        }
     },
 
     getById: async (departmentId) => {
@@ -83,6 +100,15 @@ const workService = {
         }
     },
 
+    check: async(id, status) => {
+        try{
+            const query = `UPDATE work set Status = '${status}' WHERE Id = '${id}'`;
+            console.log(query);
+            return await (await connection).execute(query);
+        } catch(error) {
+            throw error;
+        }
+    },
 }
 
 module.exports = workService;

@@ -222,7 +222,7 @@ const employeeService = {
                         From employees as e
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id
-                        Where e.Delete_Flag = ${data} and d.Id = ${DepartmentId}
+                        Where e.Delete_Flag = ${data} and e.Status = ${data} and d.Id = ${DepartmentId}
                         ORDER BY d.DepartmentName`;
             console.log(query);
             const [rows, fields] = await (await connection).query(query);

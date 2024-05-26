@@ -246,11 +246,13 @@ function getCurrentWeekRange() {
 
     // Tìm ngày đầu tiên của tuần (thứ 2)
     const firstDayOfWeek = new Date(currentDate);
-    firstDayOfWeek.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+    const dayOfWeek = currentDate.getDay();
+    const differenceToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    firstDayOfWeek.setDate(currentDate.getDate() + differenceToMonday);
     
     // Tìm ngày cuối cùng của tuần (Chủ nhật)
-    const lastDayOfWeek = new Date(currentDate);
-    lastDayOfWeek.setDate(currentDate.getDate() + (7 - currentDate.getDay()));
+    const lastDayOfWeek = new Date(firstDayOfWeek);
+    lastDayOfWeek.setDate(firstDayOfWeek.getDate() + 6);
     
     // Tách ngày, tháng và năm ra từ startDate và endDate
     const startDay = firstDayOfWeek.getDate();
