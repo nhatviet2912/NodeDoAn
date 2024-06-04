@@ -27,5 +27,9 @@ function formatDateDDMMYYYY(value) {
     return '';
 }
 
+function formatVND(number) {
+    return number.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+}
 
-module.exports = { formatDate, formatDateDDMMYYYY };
+
+module.exports = { formatDate, formatDateDDMMYYYY, formatVND };

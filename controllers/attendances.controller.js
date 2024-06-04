@@ -71,6 +71,59 @@ const attendanceController = {
         }
     },
 
+    getDetailRole: async (req, res) => {
+        try {
+            const { Year, Month, Id } = req.body;
+            const data = await attendancesService.getDetailRole(Year, Month, Id);
+            let processedData = {};
+
+            data.forEach(item => {
+                if (!processedData[item.EmployeeCode]) {
+                    processedData[item.EmployeeCode] = {
+                        EmployeeId: item.Id,
+                        EmployeeName: item.EmployeeName,
+                        EmployeeCode: item.EmployeeCode,
+                        PositionName: item.PositionName,
+                        DepartmentName: item.DepartmentName,
+                        WorkDays: item.WorkDays,
+                        attendances: []
+                    };
+                }
+            
+                let attendanceInfo = {
+                    Attendances: item.Attendances,
+                    Day: item.Day,
+                    Month: item.Month,
+                    Year: item.Year,
+                    Status: item.Status
+                };
+            
+                processedData[item.EmployeeCode].attendances.push(attendanceInfo);
+            });
+            
+            processedData = Object.values(processedData);
+            
+            if (data) {
+                return res.status(200).json({
+                    message: 'success',
+                    error: 0,
+                    data: processedData
+                })
+            } else {
+                return res.status(200).json({
+                    message: 'Danh sách sách rỗng!',
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(500).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
     get: async(req, res) => {
         try {
             const data = await attendancesService.get(req.body);
@@ -143,6 +196,54 @@ const attendanceController = {
             }
         } catch (error) {
             res.status(500).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    updateDetailRow: async(req, res) => {
+        try {
+            const data = await attendancesService.updateDetailRow(req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'Đã cập nhập thành công!',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Có lỗi xảy ra! Vui lòng kiểm tra`,
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    post: async(req, res) => {
+        try {
+            const data = await attendancesService.create(req.body);
+            if (data) {
+                return res.status(200).json({
+                    message: 'Thêm mới thành công!',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: `Có lỗi xảy ra! Vui lòng kiểm tra`,
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(400).json({
                 message: `Có lỗi xảy ra! ${error.message}`,
                 error: 1,
             })

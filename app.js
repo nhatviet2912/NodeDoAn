@@ -20,6 +20,7 @@ var workRouter = require('./routes/work');
 var benefitRouter = require('./routes/benefit');
 var reportRouter = require('./routes/report');
 var loginRouter = require('./routes/login');
+var sendMailRouter = require('./routes/sendMail');
 
 var app = express();
 app.use(cors());
@@ -51,6 +52,7 @@ app.use('/work', workRouter);
 app.use('/benefit', benefitRouter);
 app.use('/report', reportRouter);
 app.use('/login', loginRouter);
+app.use('/Mail', sendMailRouter)
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

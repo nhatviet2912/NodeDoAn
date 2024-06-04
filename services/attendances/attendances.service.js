@@ -3,17 +3,37 @@ var connection = require('../../db.js');
 const attendancesService = {
     getAll: async (currentWeekRange) => {
         try {
+            var startDate = `${currentWeekRange.startYear}-${currentWeekRange.startMonth}-${currentWeekRange.startDay}`;
+            var endDate = `${currentWeekRange.endYear}-${currentWeekRange.endMonth}-${currentWeekRange.endDay}`;
             var query = `SELECT a.Attendances, a.Day, a.Month, a.Year, a.Status, e.EmployeeName, 
                         e.EmployeeCode, p.PositionName, d.DepartmentName
-                        FROM attendances as a
-                        inner join employees as e on a.EmployeeId = e.Id
-                        inner join positions as p on e.Position_id = p.Id
-                        inner join departments as d on p.Department_id = d.Id
-                        WHERE a.Day >= '${currentWeekRange.startDay}' and a.Day <= '${currentWeekRange.endDay}'
-                            and a.Month >= '${currentWeekRange.startMonth}' and a.Month <= '${currentWeekRange.endMonth}'
-                            and a.Year >= '${currentWeekRange.startYear}' and a.Year <= '${currentWeekRange.endYear}'`;
+                        FROM attendances AS a
+                        INNER JOIN employees AS e ON a.EmployeeId = e.Id
+                        INNER JOIN positions AS p ON e.Position_id = p.Id
+                        INNER JOIN departments AS d ON p.Department_id = d.Id
+                        WHERE STR_TO_DATE(CONCAT(a.Year, '-', a.Month, '-', a.Day), '%Y-%m-%d') >= '${startDate}'
+                        AND STR_TO_DATE(CONCAT(a.Year, '-', a.Month, '-', a.Day), '%Y-%m-%d') <= '${endDate}'`;
             console.log(query);
             const [rows, fields] = await (await connection).query(query);
+            return rows;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    getDetailRole: async (Year, Month, Id) => {
+        try {
+            var query = `SELECT a.Attendances, a.Day, a.Month, a.Year, a.Status, e.EmployeeName, 
+                        e.EmployeeCode, p.PositionName, d.DepartmentName, e.Id,
+                        (SELECT COUNT(*) 
+                        FROM attendances AS a2 
+                        WHERE a2.EmployeeId = e.Id AND a2.Month = a.Month AND a2.Year = a.Year AND a2.Status = '0') AS WorkDays
+                FROM attendances AS a
+                INNER JOIN employees AS e ON a.EmployeeId = e.Id
+                INNER JOIN positions AS p ON e.Position_id = p.Id
+                INNER JOIN departments AS d ON p.Department_id = d.Id
+                WHERE a.Month = '${Month}' AND a.Year = '${Year}' and a.EmployeeId = '${Id}'`;
+            const [rows] = await (await connection).query(query);
             return rows;
         } catch (error) {
             throw error;
@@ -76,9 +96,10 @@ const attendancesService = {
 
     create: async (body) => {
         try{
-            const { Absent , EmployeeId, Day, Month, Year} = body;
-            var query = `INSERT INTO attendances(Day, Absent, EmployeeId, Month, Year) VALUES ('${Day}', '${Absent}', '${EmployeeId}', '${Month}','${Year}')`;
-            return await (await connection).execute(query);
+            const { Status , EmployeeId, Day, Month, Year} = body;
+            var query = `INSERT INTO attendances (EmployeeId, Day, Month, Year, Status)  
+                values ('${EmployeeId}', '${Day}', '${Month}', '${Year}','${Status}')`;
+            return await (await connection).query(query);
         }catch{
             throw error;
         }
@@ -93,6 +114,16 @@ const attendancesService = {
 
         } catch (error) {
             
+        }
+    },
+
+    updateDetailRow: async (body) => {
+        try {
+            var query = `Update attendances SET Status = '${body.Status}' 
+                        WHERE Attendances = '${body.Attendances}'`;
+            return await (await connection).query(query);
+        } catch (error) {
+            throw error;
         }
     },
 
