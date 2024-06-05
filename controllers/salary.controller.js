@@ -33,19 +33,30 @@ const salaryController = {
 
     create: async(req, res) => {
         try {
-            // lương ngày = (lương cơ bản * hệ số luong) / số ngày đi làm trong tháng
+            // lương cơ bản theo hệ số = (lương cơ bản * hệ số luong)
+            // số tiền bảo hiểm phải đóng = lương cơ bản theo hệ số * 0.105
+            // lương ngày = lương cơ bản theo hệ số / số ngày làm việc trong tháng
             // lương thực lãnh = lương ngày * số ngày đi làm - Tiền bảo hiểm
             const salaryData = [];
             for (const item of req.body) {
                 const isExist = await contractService.getSalary(item.EmployeeId);
                 const AmountEmployee = await benefitService.getAmountPay(item.EmployeeId);
 
+                const { SalaryBasic, SalaryCoefficient } = isExist;
+                
+                // lương theo hệ số 
+                let Salary = SalaryBasic * SalaryCoefficient;
+                
+                // số tiền bảo hiểm phải đóng
                 const Amount = AmountEmployee?.Amount ?? 0;
                 let partAmount = parseInt(Amount.toFixed(0));
-                const { SalaryBasic, SalaryCoefficient } = isExist;
 
-                let SalaryDays = item.WorkDays !== 0 ? (SalaryBasic * SalaryCoefficient) / item.TotalDay : 0;
+                // lương ngày
+                let SalaryDays = item.WorkDays !== 0 ? Salary / item.TotalDay : 0;
+
+                // lương thực lãnh
                 let NetSalary = SalaryDays * item.WorkDays - (partAmount == null ? 0 : partAmount);
+
                 salaryData.push({
                     EmployeeId: item.EmployeeId,
                     DayWork: item.WorkDays,

@@ -20,7 +20,7 @@ const benefitService = {
 
     getAmountPay: async (Id) => {
         try {
-            var query = `select b.Percent, c.SalaryBasic, (c.SalaryBasic * b.Percent / 100) as Amount
+            var query = `select b.Percent, c.SalaryBasic, ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) as Amount
                         from benefits as b 
                         inner join employees as e on b.Employee_id = e.Id
                         inner join contracts as c on c.Contract_Employee_id = e.Id

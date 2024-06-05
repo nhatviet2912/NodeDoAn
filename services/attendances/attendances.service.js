@@ -149,7 +149,7 @@ const attendancesService = {
                 .slice(3)
                 .map(([key, value]) => ({ [key]: value }));
 
-            if (workingDays.length === 0 || workingDays.length > 7) {
+            if (workingDays.length === 0) {
                 return {
                     message: 'Import file không thành công! Vui lòng kiểm tra lại',
                     error: 1,

@@ -7,7 +7,7 @@ const salaryService = {
             const { Month, Year } = body;
             var query = `SELECT s.Id, s.Month, s.Year, s.NetSalary, s.DayWork, s.SalaryDay, e.EmployeeName,
                         e.EmployeeCode, p.PositionName, d.DepartmentName, c.SalaryBasic, s.Status,
-                        (c.SalaryBasic * b.Percent / 100) as Amount, e.Email, e.Id as EmployeeId
+                        ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) as Amount, e.Email, e.Id as EmployeeId, c.SalaryCoefficient
                         FROM salary as s inner join employees as e on s.Employee_id = e.Id
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id

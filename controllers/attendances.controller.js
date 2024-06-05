@@ -261,7 +261,7 @@ const attendanceController = {
                 
                 const duplicateEmployeeIds = findDuplicates(data, 'Mã Nhân Viên');
                 if (duplicateEmployeeIds.length > 0) {
-                    res.status(400).json({
+                    return res.status(400).json({
                         message: "Có lỗi dữ liệu trùng lặp",
                         error: 1,
                         data: null
@@ -317,6 +317,70 @@ const attendanceController = {
             const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
             res.attachment('ChamCongTemplate.xlsx');
             return res.send(buffer);
+
+        } catch (error) {
+            return res.status(500).json({message: "Xuất File không thành công!", error: 1});
+        }
+    },
+
+    exportMonth: async (req, res) => {
+        try {
+            const { Year, Month, DepartmentId } = req.params;
+
+            const week = getAllDaysInMonth(Year, Month);
+
+            const data = await employeeService.getEmployeeDeparment(0,DepartmentId);
+
+            const heading = [week];
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.sheet_add_aoa(worksheet, heading);
+
+            // Đặt độ rộng cho mỗi cột
+            const columnWidths = week.map((day, index) => ({
+                wch: index === 2 ? 25 : 15
+            }));
+            worksheet['!cols'] = columnWidths;
+
+            
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+            const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+            res.attachment('ChamCongTemplate.xlsx');
+            return res.send(buffer);
+
+        } catch (error) {
+            return res.status(500).json({message: "Xuất File không thành công!", error: 1});
+        }
+    },
+
+    exportExcelMonth: async (req, res) => {
+        try {
+            const { Month } = req.params;
+            console.log(req.body);
+            console.log(Month);
+
+            // const week = getAllDaysInMonth(Year, Month);
+
+            // const data = await employeeService.getEmployeeDeparment(0,DepartmentId);
+
+            // const heading = [week];
+            // const workbook = XLSX.utils.book_new();
+            // const worksheet = XLSX.utils.json_to_sheet(data);
+            // XLSX.utils.sheet_add_aoa(worksheet, heading);
+
+            // // Đặt độ rộng cho mỗi cột
+            // const columnWidths = week.map((day, index) => ({
+            //     wch: index === 2 ? 25 : 15
+            // }));
+            // worksheet['!cols'] = columnWidths;
+
+            
+            // XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+            // const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+            // res.attachment('ChamCongTemplate.xlsx');
+            // return res.send(buffer);
 
         } catch (error) {
             return res.status(500).json({message: "Xuất File không thành công!", error: 1});
@@ -382,3 +446,18 @@ const findDuplicates = (arr, key) => {
   
     return Object.keys(counts).filter((key) => counts[key] > 1);
 };
+
+function getAllDaysInMonth(year, month) {
+    const daysOfWeek = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const daysInMonthArray = ['Mã Nhân Viên', 'Tên Nhân Viên', 'Phòng ban'];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month - 1, day);
+        const dayOfWeek = daysOfWeek[date.getDay()];
+        const formattedDate = `${dayOfWeek} (${date.getDate()}/${date.getMonth() + 1})`;
+        daysInMonthArray.push(formattedDate);
+    }
+
+    return daysInMonthArray;
+}
