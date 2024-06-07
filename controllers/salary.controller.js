@@ -4,9 +4,9 @@ const fs = require('fs');
 const XLSX = require('xlsx');
 const uploadService = require('../services/uploadfile/uploadfile.service');
 const benefitService = require('../services/benefits/benefit.service');
+const recognitionService = require('../services/recognition/recognition.service');
 
 const salaryController = {
-
     get: async(req, res) => {
         try {
             const data = await salaryService.get(req.body);
@@ -36,12 +36,12 @@ const salaryController = {
             // lương cơ bản theo hệ số = (lương cơ bản * hệ số luong)
             // số tiền bảo hiểm phải đóng = lương cơ bản theo hệ số * 0.105
             // lương ngày = lương cơ bản theo hệ số / số ngày làm việc trong tháng
-            // lương thực lãnh = lương ngày * số ngày đi làm - Tiền bảo hiểm
+            // lương thực lãnh = lương ngày * số ngày đi làm - Tiền bảo hiểm + Số tiền thưởng trong tháng
             const salaryData = [];
             for (const item of req.body) {
                 const isExist = await contractService.getSalary(item.EmployeeId);
                 const AmountEmployee = await benefitService.getAmountPay(item.EmployeeId);
-
+                const AmonutRecognition = await recognitionService.getAmountRecognition(item.EmployeeId, item.Month, item.Year);
                 const { SalaryBasic, SalaryCoefficient } = isExist;
                 
                 // lương theo hệ số 
@@ -51,11 +51,14 @@ const salaryController = {
                 const Amount = AmountEmployee?.Amount ?? 0;
                 let partAmount = parseInt(Amount.toFixed(0));
 
+                // số tiền thưởng
+                const recognition = AmonutRecognition?.Amount ?? 0;
+
                 // lương ngày
                 let SalaryDays = item.WorkDays !== 0 ? Salary / item.TotalDay : 0;
 
                 // lương thực lãnh
-                let NetSalary = SalaryDays * item.WorkDays - (partAmount == null ? 0 : partAmount);
+                let NetSalary = SalaryDays * item.WorkDays - (partAmount == null ? 0 : partAmount) + recognition;
 
                 salaryData.push({
                     EmployeeId: item.EmployeeId,
@@ -117,6 +120,30 @@ const salaryController = {
             } else {
                 return res.status(404).json({
                     message: `Không tìm thấy nhân viên có id:${id}`,
+                    error: 1,
+                    data
+                })
+            }
+        } catch (error) {
+            res.status(400).json({
+                message: `Có lỗi xảy ra! ${error.message}`,
+                error: 1,
+            })
+        }
+    },
+
+    getTotal: async(req, res) => {
+        try {
+            const data = await salaryService.getTotal();
+            if (data) {
+                return res.status(200).json({
+                    message: '',
+                    error: 0,
+                    data
+                })
+            } else {
+                return res.status(404).json({
+                    message: ``,
                     error: 1,
                     data
                 })

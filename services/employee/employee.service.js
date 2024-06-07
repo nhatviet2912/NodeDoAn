@@ -4,7 +4,8 @@ const employeeService = {
     getAll: async () => {
         try {
             var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, d.DepartmentName, e.Status
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, 
+                        d.DepartmentName, e.Status, e.EducationLevel, e.Degree
                         FROM employees as e 
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id
@@ -19,8 +20,10 @@ const employeeService = {
 
     getStatus: async (Status) => {
         try {
-            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status
+            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, 
+                        e.Gender, e.Email, e.PhoneNumber, 
+                        e.Address, e.Position_id, p.PositionName, e.Delete_Flag, e.Status,
+                        e.EducationLevel, e.Degree
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
                         Where Status = ${Status}`;
             const [rows] = await (await connection).query(query);
@@ -30,30 +33,11 @@ const employeeService = {
         }
     },
 
-    getAllPageData: async(pageSize, pageIndex) => {
-        const offset = (pageIndex - 1) * pageSize;
-        const query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName
-                        FROM employees as e inner join positions as p on e.Position_id = p.Id
-                        ORDER BY e.Id DESC
-                        LIMIT ${pageSize} OFFSET ${offset}` ;
-        const [rows] = await (await connection).query(query);
-
-        return rows;
-    },
-
-    getTotal: async() => {
-        const totalCountQuery = `SELECT COUNT(*) AS totalCount FROM employees`;
-        const [countRows] = await (await connection).query(totalCountQuery);
-        const totalCount = countRows[0].totalCount;
-        return totalCount;
-    },
-
-
     getById: async (Id) => {
         try {
-            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName
+            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, 
+                        e.Email, e.PhoneNumber, e.Address, e.Position_id, p.PositionName,
+                        e.EducationLevel, e.Degree
                         FROM employees as e inner join positions as p on e.Position_id = p.Id
                         Where e.Id = ${Id}`;
             const [rows, fields] =  await (await connection).query(query);
@@ -77,15 +61,17 @@ const employeeService = {
     create: async (body) => {
         try {
             const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, 
-                PhoneNumber, Address, Position_id} = body;
+                PhoneNumber, Address, Position_id, EducationLevel, Degree} = body;
             
             const dateOfBirthValue = DateOfBirth != null ? `'${DateOfBirth}'` : null;
             const genderValue = Gender === 'Nam' ? 1 : 0;
             var query = `INSERT INTO employees (EmployeeCode, EmployeeName, 
-                        DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id, Delete_Flag, Status)
+                        DateOfBirth, Gender, Email, PhoneNumber, Address, 
+                        Position_id, Delete_Flag, Status, EducationLevel, Degree)
                         VALUES ('${EmployeeCode}', '${EmployeeName}', 
                         ${dateOfBirthValue}, 
-                        '${genderValue}', '${Email}', '${PhoneNumber}', '${Address}', '${Position_id}', '0', '0')`;
+                        '${genderValue}', '${Email}', '${PhoneNumber}', '${Address}', 
+                        '${Position_id}', '0', '0', '${EducationLevel}', '${Degree}')`;
             return await (await connection).query(query);
         } catch (error) {
             throw error;
@@ -94,7 +80,8 @@ const employeeService = {
 
     update: async(id, body) => {
         try {
-            const { EmployeeCode, EmployeeName, DateOfBirth, Gender, Email, PhoneNumber, Address, Position_id} = body;
+            const { EmployeeCode, EmployeeName, DateOfBirth, Gender, 
+                Email, PhoneNumber, Address, Position_id, EducationLevel, Degree} = body;
             const genderValue = Gender === 'Nam' ? 1 : 0;
             const dateOfBirthValue = DateOfBirth != null ? `'${DateOfBirth}'` : null;
 
@@ -106,7 +93,9 @@ const employeeService = {
                                             Email = '${Email}',
                                             PhoneNumber = '${PhoneNumber}',
                                             Address = '${Address}',
-                                            Position_id = '${Position_id}'
+                                            Position_id = '${Position_id}',
+                                            EducationLevel = '${EducationLevel}',
+                                            Degree = '${Degree}'
                                             Where Id = '${id}'`;
             return await (await connection).query(query);
         } catch (error) {
@@ -162,16 +151,21 @@ const employeeService = {
 
     search: async(value) => {
         try {
-            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, e.Gender, e.Email, e.PhoneNumber, 
-                        e.Address, e.Position_id, p.PositionName
-                        FROM employees as e inner join positions as p on e.Position_id = p.Id
+            var query = `SELECT e.Id, e.EmployeeCode, e.EmployeeName, e.DateOfBirth, 
+                        e.Gender, e.Email, e.PhoneNumber, 
+                        e.Address, e.Position_id, p.PositionName, e.EducationLevel, e.Degree,d.DepartmentName,
+                        e.Status FROM employees as e 
+                        inner join positions as p on e.Position_id = p.Id
+                        inner join departments as d on p.Department_id = d.Id
                         Where e.EmployeeCode LIKE '%${value}%' OR
                             e.EmployeeName LIKE '%${value}%' OR
                             e.DateOfBirth LIKE '%${value}%' OR
                             e.Gender LIKE '%${value}%' OR
                             e.PhoneNumber LIKE '%${value}%'OR
                             e.Address LIKE '%${value}%' OR
-                            p.PositionName LIKE '%${value}%' and Delete_Flag = '0'`;
+                            p.PositionName LIKE '%${value}%' OR
+                            e.EducationLevel LIKE '%${value}%' OR
+                            e.Degree LIKE '%${value}%' and Delete_Flag = '0'`;
             const [rows] =  await (await connection).query(query);
             return rows;
         } catch (error) {

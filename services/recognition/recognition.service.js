@@ -1,18 +1,15 @@
 var connection = require('../../db.js');
 
-const benefitService = {
+const recognitionService = {
     getAll: async () => {
         try {
-            var query = `Select d.DepartmentName, p.PositionName, e.EmployeeName, b.BenefitCode,
-                        b.BenefitType, b.StartDate, b.EndDate, b.Description, b.Id, b.Percent,
-                        c.SalaryBasic, 
-                        ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) AS SoTienPhaiDong,
-                        c.SalaryCoefficient
-                        from benefits as b inner join employees as e on b.Employee_id = e.Id
+            var query = `Select d.DepartmentName, p.PositionName, e.EmployeeName, 
+                        r.RecognitionCode, r.Date, r.Amount, r.Descriptions
+                        from recognition as r 
+                        inner join employees as e on r.Recognition_employee = e.Id
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id
-                        inner join contracts as c on c.Contract_Employee_id = e.Id
-                        ORDER BY b.ID desc`;
+                        ORDER BY r.Id desc`;
             const [rows, fields] = await (await connection).query(query);
             return rows;
         } catch (error) {
@@ -24,8 +21,8 @@ const benefitService = {
         try {
             var query = `select b.Percent, c.SalaryBasic, ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) as Amount
                         from benefits as b 
-                        left join employees as e on b.Employee_id = e.Id
-                        left join contracts as c on c.Contract_Employee_id = e.Id
+                        inner join employees as e on b.Employee_id = e.Id
+                        inner join contracts as c on c.Contract_Employee_id = e.Id
                         where e.Id = '${Id}'`;
             const [rows, fields] = await (await connection).query(query);
             return rows[0];
@@ -36,7 +33,7 @@ const benefitService = {
 
     getById: async (Id) => {
         try{
-            const query = 'SELECT * FROM benefits WHERE Id = ?';
+            const query = 'SELECT * FROM recognition WHERE Id = ?';
             const values = [Id];
 
             const [rows, fields] = await (await connection).execute(query, values);
@@ -46,9 +43,22 @@ const benefitService = {
         }
     },
 
-    exitCode: async (BenefitCode) => {
+    getAmountRecognition: async (EmployeeId, Month, Year) => {
         try{
-            const query = `SELECT * FROM benefits WHERE BenefitCode = '${BenefitCode}'`;
+            const query = `SELECT Amount FROM recognition 
+                        WHERE Recognition_employee = '${EmployeeId}' and YEAR(Date) = '${Year}' 
+                        and Month(Date) = '${Month}'`;
+
+            const [rows, fields] = await (await connection).execute(query);
+            return rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    exitCode: async (RecognitionCode) => {
+        try{
+            const query = `SELECT * FROM recognition WHERE RecognitionCode = '${RecognitionCode}'`;
 
             const [rows, fields] = await (await connection).execute(query);
             return rows[0];
@@ -60,11 +70,13 @@ const benefitService = {
 
     create: async (body) => {
         try{
-            const { BenefitCode, BenefitType, Description, Employee_id, StartDate, EndDate } = body;
-            const query = `INSERT INTO benefits (BenefitCode, BenefitType, Description, Employee_id, StartDate, EndDate, Percent) VALUES 
-                            ( '${BenefitCode}', '${BenefitType}', '${Description}', '${Employee_id}', '${StartDate}', '${EndDate}', 10.5)`;
+            const { Recognition_employee, Descriptions, Date, Amount, RecognitionCode } = body;
+            const query = `INSERT INTO recognition (RecognitionCode, Descriptions, 
+            Recognition_employee, Date, Amount) VALUES 
+                            ('${RecognitionCode}', 
+                            '${Descriptions}', '${Recognition_employee}', 
+                            '${Date}', '${Amount}')`;
             return await (await connection).execute(query);
-
         } catch(error) {
             throw error;
         }
@@ -100,4 +112,4 @@ const benefitService = {
 }
 
 
-module.exports = benefitService;
+module.exports = recognitionService;

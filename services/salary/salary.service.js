@@ -7,12 +7,14 @@ const salaryService = {
             const { Month, Year } = body;
             var query = `SELECT s.Id, s.Month, s.Year, s.NetSalary, s.DayWork, s.SalaryDay, e.EmployeeName,
                         e.EmployeeCode, p.PositionName, d.DepartmentName, c.SalaryBasic, s.Status,
-                        ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) as Amount, e.Email, e.Id as EmployeeId, c.SalaryCoefficient
+                        ((c.SalaryBasic * c.SalaryCoefficient) * b.Percent / 100) as Amount, 
+                        e.Email, e.Id as EmployeeId, c.SalaryCoefficient, r.Amount as AmountRecognition
                         FROM salary as s inner join employees as e on s.Employee_id = e.Id
                         inner join positions as p on e.Position_id = p.Id
                         inner join departments as d on p.Department_id = d.Id
                         inner join contracts as c on c.Contract_Employee_id = e.Id
                         inner join benefits as b on b.Employee_id = e.Id
+                        left join recognition as r on r.Recognition_employee = e.Id
                         WHERE s.Month = '${Month}' AND s.Year = '${Year}';`;
             const [rows] = await (await connection).query(query);
             return rows;
@@ -76,38 +78,20 @@ const salaryService = {
         }
     },
 
-    import: async(data) => {  
-        const successData = [];
-        const failureData = [];
-
-        for (let i = 0; i < data.length; i++) {
-            const { Id, Month, NetSalary, Employee_id, Year, DayWork, SalaryDay } = data[i];
-
-            const checkQuery = `SELECT * FROM salary WHERE Id = '${Id}'`;
-            const [existingRows] = await (await connection).query(checkQuery);
-            if(existingRows.length === 0) {
-                const query = `INSERT INTO salary (Id, Month, NetSalary, Employee_id, Year, DayWork, SalaryDay) VALUES 
-                                ('${Id}', '${Month}', '${NetSalary}', '${Employee_id}', '${Year}', '${DayWork}', '${SalaryDay}')`;
-
-                try {
-                    const [rows] = await (await connection).execute(query);
-
-                    if (rows.affectedRows) {
-                        successData.push(data[i]);
-                    } else {
-                        failureData.push(data[i]);
-                    }
-                } catch (error) {
-                    console.log(error);
-                    failureData.push(data[i]);
-                }
-            }else {
-
-                failureData.push(data[i]);
-            }
+    getTotal: async () => {
+        try{
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const year = today.getFullYear();
+            var query = `SELECT SUM(NetSalary) AS TotalNetSalary
+                FROM salary
+                WHERE Month = '${month}' AND Year = '${year}'`;
+            const [rows] = await (await connection).query(query);
+            return rows[0];
         }
-
-        return { successData, failureData };
+        catch (error) {
+            throw error;
+        }
     }
 }
 

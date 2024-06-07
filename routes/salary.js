@@ -10,5 +10,6 @@ router.post('/updateStatus', salaryController.updateStatus);
 router.post('/updateStatusMany', salaryController.updateStatusMany);
 router.post('/import', uploadService.fileUploadMiddleware, salaryController.import);
 router.get('/export', salaryController.export);
+router.get('/getTotal', salaryController.getTotal);
 
 module.exports = router;
